@@ -24,6 +24,7 @@ import os
 # BELANGRIJK: denk goed na of je geïnteresseerd bent in negatieve of positieve Z-waarden.
 # Bijvoorbeeld: in mijn paper is lagere hersenrespons = Slechter. Dus was ik geïnteresseerd in negatieve Z-waarden.
 # Stel je voor dat je onderzoekt meer "semantische fouten" = slechter, dan ben je geïnteresseerd in positieve Z-waarden.
+# in Ella's geval: factoren en mate waarin iemand overeenkomt met die factor => geïnteresseerd in POSITIEVE z-waarden
 
 # als je errors krijgt, dan is dit vaak 1) ofwel door packages, installeer dan eerdere versies, of 2) doordat je problemen hebt met je dimensies van je beelden die over
 # proefpersonen heen niet overeenkomen. Lees de manual van de VLSM onderaan, daar heb ik meer info geplaatst.
@@ -51,7 +52,10 @@ curv_left_sign = np.sign(curv_left)
 # vervolgens bereken ik cluster size per permutation test (zie paper)
 
 # dit doe ik nu bij data van mijn VLSM paper. Die data staan onder "paper4_VLSM_aphasia", bij output --> permTest
-path = "E:/vlsm_scratch/output/permTest/broad40_all/"  # lokaal laten lopen, pas het pad zelf aan
+# toevoeging door Ella: door dit voor IEDERE variable of interest!
+# TODO: dit zelf aanpassen
+path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/permTest/Factor_1/"
+    #"E:/vlsm_scratch/output/permTest/broad40_all/"  # lokaal laten lopen, pas het pad zelf aan
 
 allPerms = [f for f in os.listdir(path) if f.endswith('.nii')]  # lijst alle permutation tests
 
@@ -84,8 +88,11 @@ print("cluster threshold: N = {0}".format(cluster_threshold))
 
 ## -- STEP 6: Ongecorrigeerde z-waarden CORRIGEREN advh gecorrigeerde cluster-treshold
 # nu gaan we kijken naar de effectieve Z-map.
+# toevoeging Ella: opnieuw PER VARIABELE, doe dit dus voor zelfde variabele als die je specifieerde hierboven
+# TODO: Dit zelf aanpassen
 img = nib.load(
-    'D:/PhD Pieter De Clercq/paper4_VLSM_aphasia/output/final___31Jan2024_103046/Zfinal__broad40_all.nii')  # laad je data. Staat in mapje paper4_VLSM_aphasia, pas aan (heb dit lokaal laten lopen)
+"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_1000_lesionregr_2_05Dec2024_170727/ZVLSM_factored_withMonthsPO_perm_1000_lesionregr_2Factor_1.nii")
+    #'D:/PhD Pieter De Clercq/paper4_VLSM_aphasia/output/final___31Jan2024_103046/Zfinal__broad40_all.nii')  # laad je data. Staat in mapje paper4_VLSM_aphasia, pas aan (heb dit lokaal laten lopen)
 img_data = img.get_fdata()
 
 # eerst: zet alle waarden met Z<2.33 = 0
@@ -139,7 +146,8 @@ else:  # indien er wel iets overleeft, loop ik over alle clusters die cluster th
                                          bg_map=fsaverage.sulc_left)
 
     # voorbeeld om op te slaan
-    # figure.savefig('/media/pieter/7111-5376/vlsm_scratch/plots/cluster165_broad.svg')
+    # TODO: vul dit zelf in
+    figure.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_1000_Factor_1")
     plotting.show();
 
 ## Mocht je ooit een mapje die ik hier aan maak (bvb, de Z-map maar dan met cluster threshold) willen opslaan (bvb om eens in te laden in MRIcroGL/mricron)
