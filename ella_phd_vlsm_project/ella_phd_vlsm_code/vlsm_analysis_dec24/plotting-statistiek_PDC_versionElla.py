@@ -58,13 +58,14 @@ curv_left_sign = np.sign(curv_left)
 # dit doe ik nu bij data van mijn VLSM paper. Die data staan onder "paper4_VLSM_aphasia", bij output --> permTest
 # toevoeging door Ella: door dit voor IEDERE variable of interest!
 # TODO: PAD zelf aanpassen
-path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/permTest/Factor_4/"
+path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/permTest/Factor_1/"
     #"E:/vlsm_scratch/output/permTest/broad40_all/"  # lokaal laten lopen, pas het pad zelf aan
 
 allPerms = [f for f in os.listdir(path) if f.endswith('.nii')]  # lijst alle permutation tests
 
 # TODO: pas waarde uncorrected treshold aan
-threshold = 2.33  # Z-threshold voor p=.01 zoals in mijn paper. Pas zelf aan (1.65 is .05 bvb)
+threshold = 1.645  # Uncorrected Z-threshold voor p=.01 is z = 2.33 zoals in PDC's paper. Pas zelf aan (z=1.645 is p =.05 bvb)
+# Aanvulling Ella: volgt Stark et al (2019): uncorrected z-treshold z = 1.645 (p = .05)
 
 size = list()  # hierin store je de grootste cluster size
 
@@ -84,10 +85,11 @@ for file in allPerms:
 
 ## -- STEP 5: Corrected cluster-treshold bepalen
 # -----------------------------------------------
-# nu heb je alle cluster sizes berekend. Afgaand op je threshold voor cluster size die je kiest, neem je nu de N-grootste size.
-# bijvoorbeeld, bij p=.05 is dat N=50
+# nu heb je alle cluster sizes berekend. Afgaand op je corrected threshold voor cluster size die je kiest (=/= uncorrected treshold van hierboven!), neem je nu de N-grootste size.
+# bijvoorbeeld, bij corrected cluster treshold p=.05 en 1000 permutaties, is dat N=50
+# Aanvulling Ella: ~Stark: bij p=.01 als cluster treshold en 5000 permutaties, is dat N=50 (note: zij gebruikt N=100, terwijl wel p .01 en 5000 perm?)
 # dat is je correctie voor multiple comparisons via cluster sizes
-ranked_values = np.sort(size)[::-1]  # rank ze
+ranked_values = np.sort(size)[::-1]  # rank ze (-1 statement staat voor descending order (van groot nr klein))
 # TODO: Pas ranked_values[X] aan indien je voor een ander aantal permutaties hebt gekozen EN indien andere corrected p-treshold
 #  (Pieter: 1000 permutaties => corrected p treshold p=0.05 komt overeen met N=50 dus 50e cluster size kiezen als cluster_treshold)
 cluster_threshold = ranked_values[49]  # neem de 50ste (start te tellen vanaf 0 dus daarom 49)
@@ -100,7 +102,7 @@ print("cluster threshold: N = {0}".format(cluster_threshold))
 # nu gaan we kijken naar de effectieve Z-map.
 # TODO: PAD zelf aanpassen (opnieuw PER VARIABELE, doe dit dus voor zelfde variabele als die je specifieerde hierboven)
 img = nib.load(
-"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_1000_lesionregr_2_05Dec2024_170727/ZVLSM_factored_withMonthsPO_perm_1000_lesionregr_2Factor_4.nii")
+"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregrXXXXXXXXX/ZVLSM_factored_withMonthsPO_perm_5000_lesionregr_Factor_1.nii")
     #'D:/PhD Pieter De Clercq/paper4_VLSM_aphasia/output/final___31Jan2024_103046/Zfinal__broad40_all.nii')  # laad je data. Staat in mapje paper4_VLSM_aphasia, pas aan (heb dit lokaal laten lopen)
 img_data = img.get_fdata()
 
@@ -132,7 +134,7 @@ else:  # indien er wel iets overleeft, loop ik over alle clusters die cluster th
         surviving_clusters_mask = np.isin(labeled_clusters, this_cluster)
         surviving_clusters_data = img_data * surviving_clusters_mask
         # TODO: Pas dit zelf aan afhankelijk van interesse in POSITIEVE (* 1; of volgende lijn outcommenten want geen effect) of NEGATIEVE (* -1) z-waarden
-        surviving_clusters_data = surviving_clusters_data * 1  # die 1 of -1 hangt af of je geïnteresseerd bent in negatieve of positieve Z-waarden. Speel hiermee tot je zelf hebt wat je wil
+        surviving_clusters_data = surviving_clusters_data * 1  # die 1 (positieve) of -1 (negatieve) hangt af of je geïnteresseerd bent in negatieve of positieve Z-waarden. Speel hiermee tot je zelf hebt wat je wil
 
         # terug naar nii format voor plotting
         surviving_clusters_img = nib.Nifti1Image(surviving_clusters_data, img.affine)
@@ -148,7 +150,7 @@ else:  # indien er wel iets overleeft, loop ik over alle clusters die cluster th
     surviving_clusters_mask = np.isin(labeled_clusters, surviving_clusters)
     surviving_clusters_data = img_data * surviving_clusters_mask
     # TODO: Pas dit zelf aan afhankelijk van interesse in POSITIEVE (* 1; of volgende lijn outcommenten want geen effect) of NEGATIEVE (* -1) z-waarden
-    surviving_clusters_data = surviving_clusters_data * 1  # die 1 of -1 hangt af of je geïnteresseerd bent in negatieve of positieve Z-waarden. Speel hiermee tot je zelf hebt wat je wil
+    surviving_clusters_data = surviving_clusters_data * 1  # die 1 (positieve) of -1 (negatieve) hangt af of je geïnteresseerd bent in negatieve of positieve Z-waarden. Speel hiermee tot je zelf hebt wat je wil
 
     surviving_clusters_img = nib.Nifti1Image(surviving_clusters_data, img.affine)
     texture = surface.vol_to_surf(surviving_clusters_img, fsaverage.pial_left)
@@ -160,7 +162,7 @@ else:  # indien er wel iets overleeft, loop ik over alle clusters die cluster th
 
     # voorbeeld om op te slaan
     # TODO: PAD zelf aanpassen (opnieuw PER VARIABELE, doe dit dus voor zelfde variabele als die je specifieerde hierboven); specifieer type (.svg)
-    figure.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_1000_Factor_4.svg")
+    figure.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_1.svg")
     # figure.savefig('/media/pieter/7111-5376/vlsm_scratch/plots/cluster165_broad.svg')
     plotting.show();
 
@@ -172,5 +174,5 @@ else:  # indien er wel iets overleeft, loop ik over alle clusters die cluster th
 
 # TODO: PAD zelf aanpassen (kies passende naam, met specificatie van Pad naar output file "VLSM/Permutatie_analyse_MCcorrected/surviving_clusters_VARIABELE die je specifieerde hierboven.nii")
 # Note: als VLSM analyse geen enkele cluster vindt, zal deze lijn een error geven (omdat surviving_clusters_img dan niet gedefinieerd wordt), negeer die Error (is niet erg)
-nib.save(surviving_clusters_img,"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_1000_lesionregr_2_MCcorrected/surviving_clusters_Factor_4.nii")
+nib.save(surviving_clusters_img,"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/surviving_clusters_Factor_1.nii")
 # nib.save(surviving_clusters_img, 'path/to/save/surviving_clusters.nii') #pas pad aan, doe comment weg
