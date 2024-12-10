@@ -74,7 +74,7 @@ for file in allPerms:
     img_data = img.get_fdata()
 
     # TODO: pas dit aan afhankelijk van interesse in POSITIEVE (x > treshold) of NEGATIEVE ( x < - treshold) z-waarden
-    thresholded_img_data = img_data > threshold  # zet threshold
+    thresholded_img_data = img_data > threshold  # zet threshold, behoud alleen die img_data > treshold (of bij neg z-waarden: die x <- treshold)
 
     labeled_clusters, num_clusters = ndimage.label(thresholded_img_data)  # hier zoek je naar clusters
     cluster_sizes = ndimage.sum(thresholded_img_data, labeled_clusters,
@@ -171,5 +171,6 @@ else:  # indien er wel iets overleeft, loop ik over alle clusters die cluster th
 # gebruik dan die code en pas aan:
 
 # TODO: PAD zelf aanpassen (kies passende naam, met specificatie van Pad naar output file "VLSM/Permutatie_analyse_MCcorrected/surviving_clusters_VARIABELE die je specifieerde hierboven.nii")
+# Note: als VLSM analyse geen enkele cluster vindt, zal deze lijn een error geven (omdat surviving_clusters_img dan niet gedefinieerd wordt), negeer die Error (is niet erg)
 nib.save(surviving_clusters_img,"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_1000_lesionregr_2_MCcorrected/surviving_clusters_Factor_4.nii")
 # nib.save(surviving_clusters_img, 'path/to/save/surviving_clusters.nii') #pas pad aan, doe comment weg
