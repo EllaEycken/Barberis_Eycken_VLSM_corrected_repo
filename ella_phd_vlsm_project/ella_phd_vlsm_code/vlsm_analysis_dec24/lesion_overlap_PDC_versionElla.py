@@ -50,6 +50,9 @@ print("Max lesion overlap: {0}".format(np.max(lesionOverlap)))
 # hier enkele voorbeelden van coordinaten.
 
 # TODO: speel met tresholds (zie lijnen hieronder) en andere parameters
+# meer info te vinden op: https://nilearn.github.io/dev/modules/generated/nilearn.plotting.plot_roi.html
+
+## Plot zonder tresholds (= plot van overlap tussen alle participanten, zonder beperking op 'minimale overlap')
 plotting.plot_roi(nib.Nifti1Image(lesionOverlap, img.affine), cut_coords=(-20,-4,12,20, 28, 36), display_mode='z',colorbar=True, cmap = 'cubehelix')
 # img.affine = affine argument dat nilearn nodig heeft. die img werd geladen in vorige for-loop hierboven (is dus van 1 participant).
 # maar aangezien alle beelden zelfde dimensies hebben, is die affine ook voor iedereeen hetzelfde.
@@ -60,9 +63,14 @@ plotting.plot_roi(nib.Nifti1Image(lesionOverlap, img.affine), cut_coords=(-20,-4
 plt.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_noT.svg")
     #'/media/pieter/7111-5376/2022-fMRI/secondLevel/plots/lesionOverlap_noT.svg')
 
-plotting.plot_roi(nib.Nifti1Image(lesionOverlap, img.affine), cut_coords=(-20,-4,12,20, 28, 36), display_mode='z',colorbar=True, cmap = 'cubehelix', threshold=1)
-
+## Plot met tresholds (= plot van overlap, waarbij treshold = 'minimum deze hoeveelheid mensen (absoluut aantal) moeten overlap hebben om als overlap getoond te worden in de plot')
+# vb treshold = 1: vanaf lesionoverlap van 1 persoon (dus gewoon letsel van ieder persoon) wordt dit weergegeven op de plot
+# vb treshold = 2: vanaf lesionoverlap tussen 2 personen wordt dit weergegeven op de plot (dus letsels die slechts bij 1 persoon voorkomen, worden niet getoond)
 plotting.plot_roi(nib.Nifti1Image(lesionOverlap, img.affine), cut_coords=(-20,-4,12,20, 28, 36), display_mode='z',colorbar=True, cmap = 'cubehelix', threshold=2)
+plt.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_Tresh2.svg")
+# voor Ella's studie: VLSM analyse minimal_lesion_overlap = 10% => absolute aantal = 5 (van n tot = 50): kies treshold = 5: vanaf 5 personen overlap, wordt dit getoond in plot
+plotting.plot_roi(nib.Nifti1Image(lesionOverlap, img.affine), cut_coords=(-20,-4,12,20, 28, 36), display_mode='z',colorbar=True, cmap = 'cubehelix', threshold=5)
+plt.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_Tresh5.svg")
 
 
 ### Tweede voorbeeld: surface maps
@@ -73,6 +81,7 @@ plotting.plot_roi(nib.Nifti1Image(lesionOverlap, img.affine), cut_coords=(-20,-4
 fsaverage = datasets.fetch_surf_fsaverage('fsaverage5')
 texture = surface.vol_to_surf(nib.Nifti1Image(lesionOverlap, img.affine), fsaverage.pial_left)
 
+## Plot zonder tresholds (= plot van overlap tussen alle participanten, zonder beperking op 'minimale overlap')
 # TODO: speel opnieuw met treshold en andere parameters
 figure = plotting.plot_surf_roi(fsaverage.infl_left,
                                      texture, hemi='left',
@@ -82,5 +91,18 @@ figure = plotting.plot_surf_roi(fsaverage.infl_left,
 
 # TODO: pas pad aan om te saven (vergeet niet .svg extensie en argumenten te vermelden in naamgeving!)
 plt.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_surf_noT.svg")
+    #'/media/pieter/7111-5376/2022-fMRI/secondLevel/plots/lesionOverlap_surf_noT.svg')
+plotting.show();
+
+## Plot met tresholds (= plot van overlap, waarbij treshold = 'minimum deze hoeveelheid mensen (absoluut aantal) moeten overlap hebben om als overlap getoond te worden in de plot')
+# TODO: speel opnieuw met treshold en andere parameters
+figure = plotting.plot_surf_roi(fsaverage.infl_left,
+                                     texture, hemi='left',
+                                     title='Surface left hemisphere',
+                                     colorbar=True, threshold=5,
+                                     bg_map=fsaverage.sulc_left, cmap = 'cubehelix', vmax = 6) # speel met argumenten.
+
+# TODO: pas pad aan om te saven (vergeet niet .svg extensie en argumenten te vermelden in naamgeving!)
+plt.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_surf_Tresh5.svg")
     #'/media/pieter/7111-5376/2022-fMRI/secondLevel/plots/lesionOverlap_surf_noT.svg')
 plotting.show();
