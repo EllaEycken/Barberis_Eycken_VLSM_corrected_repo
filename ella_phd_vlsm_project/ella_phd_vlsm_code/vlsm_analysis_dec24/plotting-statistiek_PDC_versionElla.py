@@ -102,7 +102,7 @@ print("cluster threshold: N = {0}".format(cluster_threshold))
 # nu gaan we kijken naar de effectieve Z-map.
 # TODO: PAD zelf aanpassen (opnieuw PER VARIABELE, doe dit dus voor zelfde variabele als die je specifieerde hierboven)
 img = nib.load(
-"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregrXXXXXXXXX/ZVLSM_factored_withMonthsPO_perm_5000_lesionregr_Factor_1.nii")
+"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_10Dec2024_094405/ZVLSM_factored_withMonthsPO_perm_5000_lesionregrFactor_1.nii")
     #'D:/PhD Pieter De Clercq/paper4_VLSM_aphasia/output/final___31Jan2024_103046/Zfinal__broad40_all.nii')  # laad je data. Staat in mapje paper4_VLSM_aphasia, pas aan (heb dit lokaal laten lopen)
 img_data = img.get_fdata()
 
