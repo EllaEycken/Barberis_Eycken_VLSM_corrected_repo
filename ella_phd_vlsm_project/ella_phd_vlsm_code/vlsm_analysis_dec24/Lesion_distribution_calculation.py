@@ -1,9 +1,16 @@
 """Script to calculate voxel-wise lesion distribution across brain areas, based on an atlas"""
 ## Description
-# This script calculates the voxel-wise lesion distribution across brain areas.
+# This script calculates the voxel-wise lesion distribution across brain areas in 2 ways.
+# 1) calculate_lesion_distribution_cluster_based: how much % of the cluster lies in certain brain region?
+# input: lesion masks and an atlas (to base brain areas on)
+# output: a list of brain areas, the amount of lesioned voxels in those brain areas, and the relative % of the total
+# clustervolume that resides in that brain region
+# note: sum will add to 100% (total cluster = 100%)
+# 2) calculate_lesion_distribution_atlas_based: how much % of a certain brain region (atlas) is occupied by the cluster?
 # input: lesion masks and an atlas (to base brain areas on)
 # output: a list of brain areas, the amount of lesioned voxels in those brain areas, and the relative percentage of that
 # brain area that is lesioned (relative percentage of lesioned voxels in those brain areas).
+# note: sum will NOT add to 100% (nl per brain area, X% of that brain area is occupied by the cluster; then for next area etc)
 # Source: MRIcroGL, support by ChatGPT
 
 
@@ -12,70 +19,7 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 import os
-
-# Constants
-list_atlas_brain_area_names = [ # source: https://scalablebrainatlas.incf.org/services/labelmapper.php?template=HOA06
-'[background]',
-'Frontal Pole',
-'Insular Cortex',
-'Superior Frontal Gyrus',
-'Middle Frontal Gyrus',
-'Inferior Frontal Gyrus, pars triangularis',
-'Inferior Frontal Gyrus, pars opercularis',
-'Precentral Gyrus',
-'Temporal Pole',
-'Superior Temporal Gyrus, anterior division',
-'Superior Temporal Gyrus, posterior division',
-'Middle Temporal Gyrus, anterior division',
-'Middle Temporal Gyrus, posterior division',
-'Middle Temporal Gyrus, temporooccipital part',
-'Inferior Temporal Gyrus, anterior division',
-'Inferior Temporal Gyrus, posterior division',
-'Inferior Temporal Gyrus, temporooccipital part',
-'Postcentral Gyrus',
-'Superior Parietal Lobule',
-'Supramarginal Gyrus, anterior division',
-'Supramarginal Gyrus, posterior division',
-'Angular Gyrus',
-'Lateral Occipital Cortex, superior division',
-'Lateral Occipital Cortex, inferior division',
-'Intracalcarine Cortex',
-'Frontal Medial Cortex',
-'Juxtapositional Lobule Cortex (formerly Supplementary Motor Cortex)',
-'Subcallosal Cortex',
-'Paracingulate Gyrus',
-'Cingulate Gyrus, anterior division',
-'Cingulate Gyrus, posterior division',
-'Precuneous Cortex',
-'Cuneal Cortex',
-'Frontal Orbital Cortex',
-'Parahippocampal Gyrus, anterior division',
-'Parahippocampal Gyrus, posterior division',
-'Lingual Gyrus',
-'Temporal Fusiform Cortex, anterior division',
-'Temporal Fusiform Cortex, posterior division',
-'Temporal Occipital Fusiform Cortex',
-'Occipital Fusiform Gyrus',
-'Frontal Operculum Cortex',
-'Central Opercular Cortex',
-'Parietal Operculum Cortex',
-'Planum Polare',
-"Heschl's Gyrus (includes H1 and H2)",
-'Planum Temporale',
-'Supracalcarine Cortex',
-'Occipital Pole',
-'#6A7F00',
-'#FFA900',
-'#7F5400',
-'#FF2A00',
-'#7F1500',
-'#FF0054',
-'#7F002A',
-'#FF00D4',
-'#7F006A',
-'#5500FF',
-'#2A007F'
-]
+from ella_phd_vlsm_project.ella_phd_vlsm_code.constants import harvard_brain_area_names
 
 
 ### PIETER PART: hoeveel % van cluster ligt in bepaalde hersenregio
@@ -88,7 +32,7 @@ list_atlas_brain_area_names = [ # source: https://scalablebrainatlas.incf.org/se
 
 # als je dit per cluster wil weten, dan is dat een leuk projectje voor jezelf om eens uit te proberen, gebruik hiervoor code hierboven als startpunt; maak een for-loop over alle individuele clusters heen.
 
-def distribution_cluster_based(lesion_img_path, atlas_img_path, tables_DIR
+def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path, tables_DIR
 
 ):
     ## Initialiseer variabelen
@@ -133,10 +77,10 @@ def distribution_cluster_based(lesion_img_path, atlas_img_path, tables_DIR
 
 
     ## Sla resultaten op in dataframe
-    # ---- STEP 1: initialize data of lists ----
+    # ---- STEP 1: initialize data dictionary of lists ----
     data_distribution_cluster = {
             "Brain Region Number": list_brain_areas,
-            "Brain Region Name":[i for i in list_atlas_brain_area_names],
+            "Brain Region Name":[harvard_brain_area_names[i] for i in list_brain_areas],
             "Cluster Voxels": list_voxels,
             "Cluster Percentage": list_percentages,
         }
@@ -145,9 +89,9 @@ def distribution_cluster_based(lesion_img_path, atlas_img_path, tables_DIR
     df_distribution_cluster = pd.DataFrame(data_distribution_cluster)
     #  https://stackoverflow.com/questions/18837262/convert-python-dict-into-a-dataframe
     pd.set_option("display.max.columns", None)
-    df_distribution_cluster.style.background_gradient().set_caption("Table of Cluster Distribution across Brain Areas (Harvard)")
+    df_distribution_cluster.style.background_gradient().set_caption("Cluster Distribution across Brain Areas (Harvard)")
 
-    # ---- STEP 3: save Dataframe as excel in interim data directory
+    # ---- STEP 3: save Dataframe as excel in table data directory
     # TODO: pas naam van excel file zelf aan (.xlsx niet vergeten)
     file_name = os.path.join(tables_DIR, "df_distribution_cluster_Factor_1.xlsx")
     df_distribution_cluster.to_excel(file_name, index=False)
@@ -157,10 +101,11 @@ def distribution_cluster_based(lesion_img_path, atlas_img_path, tables_DIR
 
 
 
-### CHAT GPT PART: hoeveel % van die hersenregio is ingenomen door cluster
+### CHAT GPT PART: hoeveel % van die hersenregio (in atlas) is ingenomen door cluster
 # -------------------------------------------------------------------------
 # TODO @ Ella: nog aan te passen!
-def calculate_lesion_distribution(lesion_img_path, atlas_img_path):
+def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, tables_DIR):
+    ## Initialize
     # Load the lesion mask and atlas images
     lesion_img = nib.load(lesion_img_path)
     atlas_img = nib.load(atlas_img_path)
@@ -169,15 +114,20 @@ def calculate_lesion_distribution(lesion_img_path, atlas_img_path):
     lesion_data = lesion_img.get_fdata()
     atlas_data = atlas_img.get_fdata()
 
-    # Get unique region labels from the atlas (excluding 0, which usually represents background)
-    region_labels = np.unique(atlas_data)
-    region_labels = region_labels[region_labels != 0]
+    ## Calculate percentages
+    # Get unique region labels from the atlas (Ella: not (excluding 0, which usually represents background))
+    list_brain_areas = np.unique(atlas_data)
+    #region_labels = region_labels[region_labels != 0]
 
     # Initialize a dictionary to store results
     lesion_distribution = {}
+    list_total_voxels_per_region = []
+    list_lesioned_voxels_per_region = []
+    list_percentages = []
+
 
     # Iterate over each region in the atlas
-    for region in region_labels:
+    for region in list_brain_areas:
         # Get a mask of the current region in the atlas
         region_mask = atlas_data == region
 
@@ -193,27 +143,39 @@ def calculate_lesion_distribution(lesion_img_path, atlas_img_path):
         else:
             lesion_percentage = 0.0
 
-        # Store the result in the dictionary
-        lesion_distribution[region] = {
-            "lesioned_voxels": lesioned_voxels_in_region,
-            "total_voxels": total_voxels_in_region,
-            "lesion_percentage": lesion_percentage
-        }
-
-    # Return the lesion distribution
-    return lesion_distribution
+        # Store the results in the lists
+        list_total_voxels_per_region.append(total_voxels_in_region)
+        list_lesioned_voxels_per_region.append(lesioned_voxels_in_region)
+        list_percentages.append(lesion_percentage)
 
 
-def print_lesion_distribution(lesion_distribution):
-    # Print the lesion distribution
-    print(f"{'Region':<10} {'Lesioned Voxels':<20} {'Total Voxels':<20} {'Lesion Percentage (%)'}")
-    print("-" * 70)
+    ## Save results in dataframe
+    # ---- STEP 1: initialize data dictionary of lists ----
+    data_distribution_atlas = {
+        "Brain Region Number": list_brain_areas,
+        "Brain Region Name": [harvard_brain_area_names[i] for i in list_brain_areas],
+        "Total Region Voxels": list_total_voxels_per_region,
+        "Lesioned Region Voxels": list_lesioned_voxels_per_region,
+        "Region Percentage": list_percentages,
+    }
 
-    for region, data in lesion_distribution.items():
-        print(
-            f"{region:<10} {data['lesioned_voxels']:<20} {data['total_voxels']:<20} {data['lesion_percentage']:<20.2f}")
+    # ---- STEP 2: Create Dataframe ----
+    df_distribution_atlas = pd.DataFrame(data_distribution_atlas)
+    #  https://stackoverflow.com/questions/18837262/convert-python-dict-into-a-dataframe
+    pd.set_option("display.max.columns", None)
+    df_distribution_atlas.style.background_gradient().set_caption(
+        "Brain Area (parts) (Harvard) overlap with cluster")
+    # discard those rows of df that have 0% overlap with the cluster
+    df_distribution_atlas = df_distribution_atlas[df_distribution_atlas["Region Percentage"] != 0.0]
 
-    print("\n")
+    # ---- STEP 3: save Dataframe as excel in table data directory
+    # TODO: pas naam van excel file zelf aan (.xlsx niet vergeten)
+    file_name = os.path.join(tables_DIR, "df_distribution_atlas_Factor_1.xlsx")
+    df_distribution_atlas.to_excel(file_name, index=False)
+    # https://www.geeksforgeeks.org/exporting-a-pandas-dataframe-to-an-excel-file/
+
+    return df_distribution_atlas
+
 
 
 if __name__ == "__main__":
@@ -231,10 +193,7 @@ if __name__ == "__main__":
     # Path to tables
 
     # Calculate the cluster distribution
-    distribution_cluster_based(lesion_img_path, atlas_img_path, tables_DIR)
+    calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path, tables_DIR)
 
     # Calculate the lesion distribution
-    # lesion_distribution = calculate_lesion_distribution(lesion_img_path, atlas_img_path)
-
-    # Print the lesion distribution
-    # print_lesion_distribution(lesion_distribution)
+    calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, tables_DIR)
