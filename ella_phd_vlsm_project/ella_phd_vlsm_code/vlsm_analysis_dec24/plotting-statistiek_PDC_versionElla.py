@@ -4,6 +4,7 @@ import numpy as np
 from scipy import ndimage
 from nilearn import plotting, datasets, surface
 import os
+from bisect import bisect_left
 
 ### ------ Script voor het plotten en bepalen van thresholds bij cluster-based permutation tests -----
 
@@ -37,6 +38,27 @@ import os
 fsaverage = datasets.fetch_surf_fsaverage('fsaverage5')
 curv_left = surface.load_surf_data(fsaverage.curv_left)
 curv_left_sign = np.sign(curv_left)
+
+# define a function to check where a value is closest to in a list (will be used later)
+def take_closest(myList, myNumber):
+    """
+    Assumes myList is sorted. Returns closest value (AND its index) to myNumber.
+
+    If two numbers are equally close, return  both (and their indices).
+
+    Source: https://stackoverflow.com/questions/12141150/from-list-of-integers-get-number-closest-to-a-given-value/12141511#12141511
+    """
+    pos = bisect_left(myList, myNumber)
+    if pos == 0:
+        return [myList[0], pos]
+    if pos == len(myList):
+        return [myList[-1], pos]
+    before = myList[pos - 1]
+    after = myList[pos]
+    if after - myNumber < myNumber - before:
+        return [after, pos]
+    else: # the numbers are equally close
+        return [before, after, pos-1, pos]
 
 
 ## -- STEP 1: VLSM analysis in NiiStat
@@ -126,9 +148,48 @@ print("Number of clusters that survived cluster threshold: {0}".format(len(survi
 
 ## -- STEP 7: PLOTTEN
 # --------------------
-# plotten. Als er niks overleeft, dan plot ik niks.
+# plotten. Als er niks overleeft, dan plot ik niks. # NOTE aanvulling Ella: plot grootste cluster
 if len(surviving_clusters) == 0:
-    print("Nothing survived threshold, nothing to plot")
+    # calculate largest cluster size and check its corresponding corrected p-value
+    largest_cluster_size = np.max(cluster_sizes)
+    closest_perm_cluster = take_closest(myList= ranked_values[::-1], myNumber= largest_cluster_size)
+    if len(closest_perm_cluster) > 2:  # als er 4 elementen in lijst zitten aka als je 2 sizes (en hun posities) hebt die het dichtst bij jouw grootste cluster liggen
+        corresponding_perm_cluster_size = closest_perm_cluster[:1]
+        # todo: pas 5000 indien nodig aan naar andere totaal aantal permutaties
+        corresponding_p_value = [1-(closest_perm_cluster[3]/5000), 1-(closest_perm_cluster[2]/5000)]  # 1 - X omdat X = xe 'kleinste' cluster, en wij willen y'de grootste cluster want dat is p
+        print("permutation cluster sizes around your largest cluster : {0}".format(corresponding_perm_cluster_size))
+        print("p-values around your largest cluster : {0}".format(corresponding_p_value))
+    else:  # 1 cluster die dichtst bij jouw grootste cluster ligt
+        corresponding_perm_cluster_size = closest_perm_cluster[0]
+        # todo: pas 5000 indien nodig aan naar andere totaal aantal permutaties
+        corresponding_p_value = 1-(closest_perm_cluster[1]/5000)
+        print("permutation cluster size closest to your largest cluster : {0}".format(corresponding_perm_cluster_size))
+        print("p-value closest to your largest cluster : {0}".format(corresponding_p_value))
+
+
+    # decide on largest cluster img data
+    largest_cluster = np.where(max(cluster_sizes))[0]
+    largest_cluster_mask = np.isin(labeled_clusters, largest_cluster)
+    largest_cluster_data = img_data * largest_cluster_mask
+    # TODO: Pas dit zelf aan afhankelijk van interesse in POSITIEVE (* 1; of volgende lijn outcommenten want geen effect) of NEGATIEVE (* -1) z-waarden
+    largest_cluster_data = largest_cluster_data * 1  # die 1 (positieve) of -1 (negatieve) hangt af of je geïnteresseerd bent in negatieve of positieve Z-waarden. Speel hiermee tot je zelf hebt wat je wil
+
+    # terug naar nii format voor plotting
+    largest_cluster_img = nib.Nifti1Image(largest_cluster_data, img.affine)
+    texture = surface.vol_to_surf(largest_cluster_img, fsaverage.pial_left)  # surface map
+    figure = plotting.plot_surf_stat_map(fsaverage.infl_left,
+                                         texture, hemi='left',
+                                         title='Surface plot left hemisphere of cluster {0}'.format(largest_cluster),
+                                         colorbar=True, threshold=0.001, cmap='twilight',
+                                         bg_map=fsaverage.sulc_left)
+    # voorbeeld om op te slaan
+    # TODO: PAD zelf aanpassen (opnieuw PER VARIABELE, doe dit dus voor zelfde variabele als die je specifieerde hierboven); specifieer type (.svg)
+    figure.savefig(
+        "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_2_nonsign_largest_cluster.svg")
+    # figure.savefig('/media/pieter/7111-5376/vlsm_scratch/plots/nonsign_largest_cluster165_broad.svg')
+    plotting.show();
+    print("Nothing survived threshold, nothing significant to plot, largest cluster (not significant) is shown")
+
 else:  # indien er wel iets overleeft, loop ik over alle clusters die cluster threshold overleven:
     for this_cluster in surviving_clusters:
         # clusters die het niet overleven, zet ik hieronder op 0. Dan ga ik er per cluster door. 3 lijntjes code hieronder
@@ -172,8 +233,13 @@ else:  # indien er wel iets overleeft, loop ik over alle clusters die cluster th
 # -----------------------------------
 ## Mocht je ooit een mapje die ik hier aan maak (bvb, de Z-map maar dan met cluster threshold) willen opslaan (bvb om eens in te laden in MRIcroGL/mricron)
 # gebruik dan die code en pas aan:
-
-# TODO: PAD zelf aanpassen (kies passende naam, met specificatie van Pad naar output file "VLSM/Permutatie_analyse_MCcorrected/surviving_clusters_VARIABELE die je specifieerde hierboven.nii")
-# Note: als VLSM analyse geen enkele cluster vindt, zal deze lijn een error geven (omdat surviving_clusters_img dan niet gedefinieerd wordt), negeer die Error (is niet erg)
-nib.save(surviving_clusters_img,"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/surviving_clusters_Factor_1.nii")
-# nib.save(surviving_clusters_img, 'path/to/save/surviving_clusters.nii') #pas pad aan, doe comment weg
+if len(surviving_clusters) == 0:
+    # TODO: PAD zelf aanpassen (kies passende naam, met specificatie van Pad naar output file "VLSM/Permutatie_analyse_MCcorrected/surviving_clusters_VARIABELE die je specifieerde hierboven.nii")
+    nib.save(largest_cluster_img,
+             "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_2.nii")
+    # nib.save(surviving_clusters_img, 'path/to/save/surviving_clusters.nii') #pas pad aan, doe comment weg
+else:
+    # TODO: PAD zelf aanpassen (kies passende naam, met specificatie van Pad naar output file "VLSM/Permutatie_analyse_MCcorrected/surviving_clusters_VARIABELE die je specifieerde hierboven.nii")
+    # Note: als VLSM analyse geen enkele cluster vindt, zal deze lijn een error geven (omdat surviving_clusters_img dan niet gedefinieerd wordt), negeer die Error (is niet erg)
+    nib.save(surviving_clusters_img,"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/surviving_clusters_Factor_2.nii")
+    # nib.save(surviving_clusters_img, 'path/to/save/surviving_clusters.nii') #pas pad aan, doe comment weg

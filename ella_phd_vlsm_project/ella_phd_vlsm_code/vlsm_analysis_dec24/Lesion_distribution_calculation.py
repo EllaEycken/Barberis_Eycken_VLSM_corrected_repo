@@ -19,7 +19,73 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 import os
-from ella_phd_vlsm_project.ella_phd_vlsm_code.constants import harvard_brain_area_names
+# from ella_phd_vlsm_project.ella_phd_vlsm_code.constants import harvard_brain_area_names
+
+
+## VARIABLES
+# A list of the brain regions numbered from 0 to... in the Harvard-Oxford Atlas
+harvard_brain_area_names = [ # source: https://scalablebrainatlas.incf.org/services/labelmapper.php?template=HOA06
+'[background]',
+'Frontal Pole',
+'Insular Cortex',
+'Superior Frontal Gyrus',
+'Middle Frontal Gyrus',
+'Inferior Frontal Gyrus, pars triangularis',
+'Inferior Frontal Gyrus, pars opercularis',
+'Precentral Gyrus',
+'Temporal Pole',
+'Superior Temporal Gyrus, anterior division',
+'Superior Temporal Gyrus, posterior division',
+'Middle Temporal Gyrus, anterior division',
+'Middle Temporal Gyrus, posterior division',
+'Middle Temporal Gyrus, temporooccipital part',
+'Inferior Temporal Gyrus, anterior division',
+'Inferior Temporal Gyrus, posterior division',
+'Inferior Temporal Gyrus, temporooccipital part',
+'Postcentral Gyrus',
+'Superior Parietal Lobule',
+'Supramarginal Gyrus, anterior division',
+'Supramarginal Gyrus, posterior division',
+'Angular Gyrus',
+'Lateral Occipital Cortex, superior division',
+'Lateral Occipital Cortex, inferior division',
+'Intracalcarine Cortex',
+'Frontal Medial Cortex',
+'Juxtapositional Lobule Cortex (formerly Supplementary Motor Cortex)',
+'Subcallosal Cortex',
+'Paracingulate Gyrus',
+'Cingulate Gyrus, anterior division',
+'Cingulate Gyrus, posterior division',
+'Precuneous Cortex',
+'Cuneal Cortex',
+'Frontal Orbital Cortex',
+'Parahippocampal Gyrus, anterior division',
+'Parahippocampal Gyrus, posterior division',
+'Lingual Gyrus',
+'Temporal Fusiform Cortex, anterior division',
+'Temporal Fusiform Cortex, posterior division',
+'Temporal Occipital Fusiform Cortex',
+'Occipital Fusiform Gyrus',
+'Frontal Operculum Cortex',
+'Central Opercular Cortex',
+'Parietal Operculum Cortex',
+'Planum Polare',
+"Heschl's Gyrus (includes H1 and H2)",
+'Planum Temporale',
+'Supracalcarine Cortex',
+'Occipital Pole',
+'#6A7F00',
+'#FFA900',
+'#7F5400',
+'#FF2A00',
+'#7F1500',
+'#FF0054',
+'#7F002A',
+'#FF00D4',
+'#7F006A',
+'#5500FF',
+'#2A007F'
+]
 
 
 ### PIETER PART: hoeveel % van cluster ligt in bepaalde hersenregio
@@ -80,7 +146,7 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
     # ---- STEP 1: initialize data dictionary of lists ----
     data_distribution_cluster = {
             "Brain Region Number": list_brain_areas,
-            "Brain Region Name":[harvard_brain_area_names[i] for i in list_brain_areas],
+            "Brain Region Name":[harvard_brain_area_names[int(i)] for i in list_brain_areas],
             "Cluster Voxels": list_voxels,
             "Cluster Percentage": list_percentages,
         }
@@ -93,7 +159,7 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
 
     # ---- STEP 3: save Dataframe as excel in table data directory
     # TODO: pas naam van excel file zelf aan (.xlsx niet vergeten)
-    file_name = os.path.join(tables_DIR, "df_distribution_cluster_Factor_1.xlsx")
+    file_name = os.path.join(tables_DIR, "df_distribution_cluster_Factor_3.xlsx")
     df_distribution_cluster.to_excel(file_name, index=False)
         # https://www.geeksforgeeks.org/exporting-a-pandas-dataframe-to-an-excel-file/
 
@@ -153,7 +219,7 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
     # ---- STEP 1: initialize data dictionary of lists ----
     data_distribution_atlas = {
         "Brain Region Number": list_brain_areas,
-        "Brain Region Name": [harvard_brain_area_names[i] for i in list_brain_areas],
+        "Brain Region Name": [harvard_brain_area_names[int(i)] for i in list_brain_areas],
         "Total Region Voxels": list_total_voxels_per_region,
         "Lesioned Region Voxels": list_lesioned_voxels_per_region,
         "Region Percentage": list_percentages,
@@ -167,10 +233,14 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
         "Brain Area (parts) (Harvard) overlap with cluster")
     # discard those rows of df that have 0% overlap with the cluster
     df_distribution_atlas = df_distribution_atlas[df_distribution_atlas["Region Percentage"] != 0.0]
+    # discard first row if that row is the background region:
+    if df_distribution_atlas["Brain Region Number"][0] == 0: # number 0 in Harvard atlas = background region
+        df_distribution_atlas = df_distribution_atlas.iloc[1:]
+        df_distribution_atlas.reset_index(drop = True, inplace = True)
 
     # ---- STEP 3: save Dataframe as excel in table data directory
     # TODO: pas naam van excel file zelf aan (.xlsx niet vergeten)
-    file_name = os.path.join(tables_DIR, "df_distribution_atlas_Factor_1.xlsx")
+    file_name = os.path.join(tables_DIR, "df_distribution_atlas_Factor_3.xlsx")
     df_distribution_atlas.to_excel(file_name, index=False)
     # https://www.geeksforgeeks.org/exporting-a-pandas-dataframe-to-an-excel-file/
 
@@ -182,9 +252,11 @@ if __name__ == "__main__":
     # Define the file paths for the lesion mask and atlas image
     ## Initialize some variables
     # TODO: Vul dit zelf aan
-    lesion_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/sub-01.nii"
+    lesion_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/surviving_clusters_Factor_3.nii"
+        # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/sub-01.nii"
     # Path to lesion_mask (nifti-file), make sure to use / instead of \; and add .nii extension
-    atlas_img_path = 'D:/PhD Pieter De Clercq/paper4_VLSM_aphasia/harvard_new.nii'  # atlas kan je terugvinden in paper4_VLSM_aphasia
+    atlas_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/helper files/harvard_new.nii"
+        # 'D:/PhD Pieter De Clercq/paper4_VLSM_aphasia/harvard_new.nii'  # atlas kan je terugvinden in paper4_VLSM_aphasia
     # Note Pieter: het kan zijn dat je later errors krijgt omdat je dimensies van de atlas niet overeenkomen met je dimensies van je letselmapje.
     # Om dit op te lossen: open een letselmapje in MRIcroGL. Dan Draw --> open VOI. Open als nii. Open die harvard_new.nii zoals op de L-schijf staat
     # Direct erna: draw --> save VOI (opslaan als nifti). harvard_new.nii overwriten. Je doet dus niks, enkel openen en weer opslaan sluiten, maar door te openen bovenop het letselmapje,
@@ -193,7 +265,7 @@ if __name__ == "__main__":
     # Path to tables
 
     # Calculate the cluster distribution
-    calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path, tables_DIR)
+    # calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path, tables_DIR)
 
     # Calculate the lesion distribution
     calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, tables_DIR)
