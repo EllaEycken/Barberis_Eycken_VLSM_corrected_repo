@@ -27,9 +27,10 @@ allFiles = [f for f in os.listdir(path) if f.endswith('.nii')] # lijst alle file
 # -------------------------
 # alle individuele data zijn binary files, 3D
 # om lesionOverlap te maken, maak ik een som van alle binary files
-# TODO: bepaal maximum lesionOverlap i (= totaal aantal proefpersonen)
-# in dit voorbeeldje is de hoogste som = 7, dus een maximum lesionOverlap van 7 proefpersonen hier (zie output) dus i = 7 kiezen
-i = 49 # voor Ella's VLSM studie dec24 (49 participanten)
+
+i = 0 # zal de maximale lesion overlap zijn (zv)
+# bvb Pieter  is de hoogste som = 7, dus een maximum lesionOverlap van 7 proefpersonen zal hier (zie output) dus i = 7 worden
+# aanvulling Ella: i zal 49 worden (49 participanten)
 for subject in allFiles:
     path_subject = path + subject # concateneert het pad
     img = nib.load(path_subject)
@@ -87,7 +88,7 @@ figure = plotting.plot_surf_roi(fsaverage.infl_left,
                                      texture, hemi='left',
                                      title='Surface left hemisphere',
                                      colorbar=True, #threshold=2,
-                                     bg_map=fsaverage.sulc_left, cmap = 'cubehelix', vmax = 6) # speel met argumenten.
+                                     bg_map=fsaverage.sulc_left, cmap = 'cubehelix', vmax = 20) # speel met argumenten.
 
 # TODO: pas pad aan om te saven (vergeet niet .svg extensie en argumenten te vermelden in naamgeving!)
 plt.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_surf_noT.svg")
@@ -99,8 +100,19 @@ plotting.show();
 figure = plotting.plot_surf_roi(fsaverage.infl_left,
                                      texture, hemi='left',
                                      title='Surface left hemisphere',
-                                     colorbar=True, threshold=5,
-                                     bg_map=fsaverage.sulc_left, cmap = 'cubehelix', vmax = 6) # speel met argumenten.
+                                     colorbar=True, threshold=int(2),
+                                     bg_map=fsaverage.sulc_left, cmap = 'cubehelix', vmax = 20) # speel met argumenten.
+
+# TODO: pas pad aan om te saven (vergeet niet .svg extensie en argumenten te vermelden in naamgeving!)
+plt.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_surf_Tresh2.svg")
+    #'/media/pieter/7111-5376/2022-fMRI/secondLevel/plots/lesionOverlap_surf_noT.svg')
+plotting.show();
+# TODO: speel opnieuw met treshold en andere parameters
+figure = plotting.plot_surf_roi(fsaverage.infl_left,
+                                     texture, hemi='left',
+                                     title='Surface left hemisphere',
+                                     colorbar=True, threshold=int(5),
+                                     bg_map=fsaverage.sulc_left, cmap = 'cubehelix', vmax = 20) # speel met argumenten.
 
 # TODO: pas pad aan om te saven (vergeet niet .svg extensie en argumenten te vermelden in naamgeving!)
 plt.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_surf_Tresh5.svg")
