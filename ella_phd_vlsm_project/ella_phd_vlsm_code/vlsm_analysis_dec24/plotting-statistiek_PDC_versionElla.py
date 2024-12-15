@@ -80,7 +80,7 @@ def take_closest(myList, myNumber):
 # dit doe ik nu bij data van mijn VLSM paper. Die data staan onder "paper4_VLSM_aphasia", bij output --> permTest
 # toevoeging door Ella: door dit voor IEDERE variable of interest!
 # TODO: PAD zelf aanpassen
-path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/permTest/Factor_1/"
+path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/permTest/Factor_2/"
     #"E:/vlsm_scratch/output/permTest/broad40_all/"  # lokaal laten lopen, pas het pad zelf aan
 
 allPerms = [f for f in os.listdir(path) if f.endswith('.nii')]  # lijst alle permutation tests
@@ -125,7 +125,7 @@ print("cluster threshold: N = {0}".format(cluster_threshold))
 # nu gaan we kijken naar de effectieve Z-map.
 # TODO: PAD zelf aanpassen (opnieuw PER VARIABELE, doe dit dus voor zelfde variabele als die je specifieerde hierboven)
 img = nib.load(
-"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_10Dec2024_094405/ZVLSM_factored_withMonthsPO_perm_5000_lesionregrFactor_1.nii")
+"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_10Dec2024_094405/ZVLSM_factored_withMonthsPO_perm_5000_lesionregrFactor_2.nii")
     #'D:/PhD Pieter De Clercq/paper4_VLSM_aphasia/output/final___31Jan2024_103046/Zfinal__broad40_all.nii')  # laad je data. Staat in mapje paper4_VLSM_aphasia, pas aan (heb dit lokaal laten lopen)
 img_data = img.get_fdata()
 
@@ -185,7 +185,7 @@ if len(surviving_clusters) == 0:
     # voorbeeld om op te slaan
     # TODO: PAD zelf aanpassen (opnieuw PER VARIABELE, doe dit dus voor zelfde variabele als die je specifieerde hierboven); specifieer type (.svg)
     figure.savefig(
-        "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_2_nonsign_largest_cluster.svg")
+        "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_2_nonsign.svg")
     # figure.savefig('/media/pieter/7111-5376/vlsm_scratch/plots/nonsign_largest_cluster165_broad.svg')
     plotting.show();
     print("Nothing survived threshold, nothing significant to plot, largest cluster (not significant) is shown")
@@ -224,7 +224,7 @@ else:  # indien er wel iets overleeft, loop ik over alle clusters die cluster th
 
     # voorbeeld om op te slaan
     # TODO: PAD zelf aanpassen (opnieuw PER VARIABELE, doe dit dus voor zelfde variabele als die je specifieerde hierboven); specifieer type (.svg)
-    figure.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_1.svg")
+    figure.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_2.svg")
     # figure.savefig('/media/pieter/7111-5376/vlsm_scratch/plots/cluster165_broad.svg')
     plotting.show();
 
