@@ -133,9 +133,17 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
         #set values lower than zthreshold to 0
         # TODO: change this to > -zthreshold if focus is on negative z-values
         lesion_data[lesion_data < zthreshold] = 0
-    # TODO: pas dit aan afhankelijk van je interesse in positieve of negatieve z-waarden
-    data = lesion_data * 1  # bij positieve: *1; bij negatieve: soms doe ik *-1 om voor negatieve --> positieve Z-waarden te gaan omdat het makkelijker werkte met positieve z-waarden
-    data[data > 0] = 1  # Z-waarden binary maken (niet meer geïnteresseerd in Z-waarden van de cluster, wel in welk hersengebied de cluster (= alles met z-waarde > 0) ligt
+        # TODO: pas dit aan afhankelijk van je interesse in positieve of negatieve z-waarden
+        data = lesion_data * 1  # bij positieve: *1; bij negatieve: soms doe ik *-1 om voor negatieve --> positieve Z-waarden te gaan omdat het makkelijker werkte met positieve z-waarden
+        data = (lesion_data >= zthreshold).astype(int)  # Create a binary mask where values >= zthreshold are 1, and all others are 0 (based on ChatGPT)
+        # how is the above done:
+        # 1) It creates a boolean array where values greater than or equal to zthreshold are True and everything else is False.
+        # 2) Then, .astype(int) converts the boolean array to integers, where True becomes 1 and False becomes 0.
+    else:
+        # TODO: pas dit aan afhankelijk van je interesse in positieve of negatieve z-waarden
+        data = lesion_data * 1  # bij positieve: *1; bij negatieve: soms doe ik *-1 om voor negatieve --> positieve Z-waarden te gaan omdat het makkelijker werkte met positieve z-waarden
+        data[data > 0] = 1  # would be of risk to overwrite former parts
+    # Z-waarden binary maken (niet meer geïnteresseerd in Z-waarden van de cluster, wel in welk hersengebied de cluster (= alles met z-waarde > 0) ligt
     # dus alleen interesse in OF een voxel behoort tot cluster (dan nl Z-waarde > 0 (behouden: maak van z-waarde een 1)) of niet (niet behouden: z-waarde blijft 0)
     total_voxels = np.sum(data)  # totaal aantal voxels van de cluster meten om later percentage te berekenen.
     atlas = nib.load(
@@ -188,7 +196,7 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
 
     # ---- STEP 3: save Dataframe as excel in table data directory
     # TODO: pas naam van excel file zelf aan (.xlsx niet vergeten)
-    file_name = os.path.join(tables_DIR, "df_distribution_cluster_Factor_2_thresh.xlsx")
+    file_name = os.path.join(tables_DIR, "df_distribution_cluster_Factor_2_no_thresh_option2.xlsx")
     df_distribution_cluster.to_excel(file_name, index=False)
         # https://www.geeksforgeeks.org/exporting-a-pandas-dataframe-to-an-excel-file/
 
@@ -226,7 +234,16 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
         #set values lower than zthreshold to 0
         # TODO: change this to > -zthreshold if focus is on negative z-values
         lesion_data[lesion_data < zthreshold] = 0
-    # TODO: pas dit aan afhankelijk van je interesse in positieve of negatieve z-waarden
+        # TODO: pas dit aan afhankelijk van je interesse in positieve of negatieve z-waarden
+        lesion_data = lesion_data * 1  # bij positieve: *1; bij negatieve: soms doe ik *-1 om voor negatieve --> positieve Z-waarden te gaan omdat het makkelijker werkte met positieve z-waarden
+        lesion_data = (lesion_data >= zthreshold).astype(
+            int)  # Create a binary mask where values >= zthreshold are 1, and all others are 0 (based on ChatGPT)
+    else:
+        # TODO: pas dit aan afhankelijk van je interesse in positieve of negatieve z-waarden
+        lesion_data = lesion_data * 1  # bij positieve: *1; bij negatieve: soms doe ik *-1 om voor negatieve --> positieve Z-waarden te gaan omdat het makkelijker werkte met positieve z-waarden
+        lesion_data[lesion_data > 0] = 1  # would be of risk to overwrite former parts
+        # data[data > 0] = 1  # would be of risk to overwrite former parts
+        # Z-waarden binary maken (niet meer geïnteresseerd in Z-waarden van de cluster, wel in welk hersengebied de cluster (= alles met z-waarde > 0) ligt
 
     atlas_data = atlas_img.get_fdata()
 
@@ -290,7 +307,7 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
 
     # ---- STEP 3: save Dataframe as excel in table data directory
     # TODO: pas naam van excel file zelf aan (.xlsx niet vergeten)
-    file_name = os.path.join(tables_DIR, "df_distribution_atlas_Factor_2_thresh.xlsx")
+    file_name = os.path.join(tables_DIR, "df_distribution_atlas_Factor_2_no_thresh_option2.xlsx")
     df_distribution_atlas.to_excel(file_name, index=False)
     # https://www.geeksforgeeks.org/exporting-a-pandas-dataframe-to-an-excel-file/
 
@@ -319,7 +336,7 @@ if __name__ == "__main__":
         lesion_img_path,
         atlas_img_path,
         tables_DIR,
-        VLSM_result= "yes",
+        VLSM_result= "no",
         zthreshold = 1.645,
     )
 
@@ -328,6 +345,6 @@ if __name__ == "__main__":
         lesion_img_path,
         atlas_img_path,
         tables_DIR,
-        VLSM_result="yes",
+        VLSM_result="no",
         zthreshold=1.645,
     )
