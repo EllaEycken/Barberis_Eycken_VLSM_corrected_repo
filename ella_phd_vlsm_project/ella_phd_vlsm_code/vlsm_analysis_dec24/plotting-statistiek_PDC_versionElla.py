@@ -168,9 +168,12 @@ if len(surviving_clusters) == 0:
 
 
     # decide on largest cluster img data
-    largest_cluster = np.where(max(cluster_sizes))[0]
+    largest_cluster = np.where(max(cluster_sizes))
+    print('largest cluster', largest_cluster)
     largest_cluster_mask = np.isin(labeled_clusters, largest_cluster)
+    print('largest cluster mask', largest_cluster_mask)
     largest_cluster_data = img_data * largest_cluster_mask
+    print('largest cluster data', largest_cluster_data)
     # TODO: Pas dit zelf aan afhankelijk van interesse in POSITIEVE (* 1; of volgende lijn outcommenten want geen effect) of NEGATIEVE (* -1) z-waarden
     largest_cluster_data = largest_cluster_data * 1  # die 1 (positieve) of -1 (negatieve) hangt af of je geïnteresseerd bent in negatieve of positieve Z-waarden. Speel hiermee tot je zelf hebt wat je wil
 
@@ -179,22 +182,25 @@ if len(surviving_clusters) == 0:
     texture = surface.vol_to_surf(largest_cluster_img, fsaverage.pial_left)  # surface map
     figure = plotting.plot_surf_stat_map(fsaverage.infl_left,
                                          texture, hemi='left',
-                                         title='Surface plot left hemisphere of cluster {0}'.format(largest_cluster),
+                                         title='Surface plot left hemisphere of largest cluster'.format(largest_cluster),
                                          colorbar=True, threshold=0.001, cmap='twilight',
                                          bg_map=fsaverage.sulc_left)
     # voorbeeld om op te slaan
     # TODO: PAD zelf aanpassen (opnieuw PER VARIABELE, doe dit dus voor zelfde variabele als die je specifieerde hierboven); specifieer type (.svg)
     figure.savefig(
-        "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_2_nonsign.svg")
+        "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_2_nonsign_thresh.svg")
     # figure.savefig('/media/pieter/7111-5376/vlsm_scratch/plots/nonsign_largest_cluster165_broad.svg')
     plotting.show();
     print("Nothing survived threshold, nothing significant to plot, largest cluster (not significant) is shown")
 
 else:  # indien er wel iets overleeft, loop ik over alle clusters die cluster threshold overleven:
     for this_cluster in surviving_clusters:
+        print ('this_cluster', this_cluster)
         # clusters die het niet overleven, zet ik hieronder op 0. Dan ga ik er per cluster door. 3 lijntjes code hieronder
         surviving_clusters_mask = np.isin(labeled_clusters, this_cluster)
+        print('surviving_cluster_mask', surviving_clusters_mask)
         surviving_clusters_data = img_data * surviving_clusters_mask
+        print('surviving clusters data', surviving_clusters_data)
         # TODO: Pas dit zelf aan afhankelijk van interesse in POSITIEVE (* 1; of volgende lijn outcommenten want geen effect) of NEGATIEVE (* -1) z-waarden
         surviving_clusters_data = surviving_clusters_data * 1  # die 1 (positieve) of -1 (negatieve) hangt af of je geïnteresseerd bent in negatieve of positieve Z-waarden. Speel hiermee tot je zelf hebt wat je wil
 
@@ -236,7 +242,7 @@ else:  # indien er wel iets overleeft, loop ik over alle clusters die cluster th
 if len(surviving_clusters) == 0:
     # TODO: PAD zelf aanpassen (kies passende naam, met specificatie van Pad naar output file "VLSM/Permutatie_analyse_MCcorrected/surviving_clusters_VARIABELE die je specifieerde hierboven.nii")
     nib.save(largest_cluster_img,
-             "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_2.nii")
+             "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_2_thresh.nii")
     # nib.save(surviving_clusters_img, 'path/to/save/surviving_clusters.nii') #pas pad aan, doe comment weg
 else:
     # TODO: PAD zelf aanpassen (kies passende naam, met specificatie van Pad naar output file "VLSM/Permutatie_analyse_MCcorrected/surviving_clusters_VARIABELE die je specifieerde hierboven.nii")
