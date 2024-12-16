@@ -30,6 +30,11 @@ from bisect import bisect_left
 # als je errors krijgt, dan is dit vaak 1) ofwel door packages, installeer dan eerdere versies, of 2) doordat je problemen hebt met je dimensies van je beelden die over
 # proefpersonen heen niet overeenkomen. Lees de manual van de VLSM onderaan, daar heb ik meer info geplaatst.
 
+# IMPORTANT NOTE:
+# final results on Z-file and plot show perm-based z-clusters (that survived cluster threshold or that were large enough.
+# HOWEVER, the files still show the mask on top of the ORIGINAL img_data, so not on top of the THRESHOLDED ('uncorrected p-threshold') img_data
+# For further analyses, z-values below 'uncorrected' p-value must be EXCLUDED!
+
 
 ## -- PREPARATIONS --
 # ----------------------
@@ -143,6 +148,7 @@ print("Largest cluster size= {0} voxels".format(np.max(cluster_sizes)))  # dit i
 
 # nu kijken welke clusters de thresholding overleven:
 surviving_clusters = np.where(cluster_sizes >= cluster_threshold)[0]
+# np.where returns tuple [(indices of elements in array where condition is true), empty] so np.where(..)[0] returns just the indices
 print("Number of clusters that survived cluster threshold: {0}".format(len(surviving_clusters)))
 
 
@@ -168,9 +174,11 @@ if len(surviving_clusters) == 0:
 
 
     # decide on largest cluster img data
-    largest_cluster = np.where(max(cluster_sizes))
+    largest_cluster = np.where(cluster_sizes == largest_cluster_size)[0]
+    # largest_cluster = np.where(np.max(cluster_sizes))[0]  # should return index of the largest cluster
     print('largest cluster', largest_cluster)
     largest_cluster_mask = np.isin(labeled_clusters, largest_cluster)
+    print('labeled clusters', labeled_clusters)
     print('largest cluster mask', largest_cluster_mask)
     largest_cluster_data = img_data * largest_cluster_mask
     print('largest cluster data', largest_cluster_data)
@@ -188,7 +196,7 @@ if len(surviving_clusters) == 0:
     # voorbeeld om op te slaan
     # TODO: PAD zelf aanpassen (opnieuw PER VARIABELE, doe dit dus voor zelfde variabele als die je specifieerde hierboven); specifieer type (.svg)
     figure.savefig(
-        "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_2_nonsign_thresh.svg")
+        "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_2_nonsign.svg")
     # figure.savefig('/media/pieter/7111-5376/vlsm_scratch/plots/nonsign_largest_cluster165_broad.svg')
     plotting.show();
     print("Nothing survived threshold, nothing significant to plot, largest cluster (not significant) is shown")
@@ -249,3 +257,8 @@ else:
     # Note: als VLSM analyse geen enkele cluster vindt, zal deze lijn een error geven (omdat surviving_clusters_img dan niet gedefinieerd wordt), negeer die Error (is niet erg)
     nib.save(surviving_clusters_img,"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/surviving_clusters_Factor_2.nii")
     # nib.save(surviving_clusters_img, 'path/to/save/surviving_clusters.nii') #pas pad aan, doe comment weg
+
+## IMPORTANT NOTE:
+# final results on Z-file and plot show perm-based z-clusters (that survived cluster threshold or that were large enough.
+# HOWEVER, the files still show the mask on top of the ORIGINAL img_data, so not on top of the THRESHOLDED ('uncorrected p-threshold') img_data
+# For further analyses, z-values below 'uncorrected' p-value must be EXCLUDED!

@@ -87,6 +87,16 @@ harvard_brain_area_names = [ # source: https://scalablebrainatlas.incf.org/servi
 '#2A007F'
 ]
 
+### PREPARATION: only needed IF using VLSM-output based on plotting-statistiek_PDC_versionElla.py file:
+# -----------------------------------------------------------------------------------------------------
+# What: correct for the 'uncorrected threshold (=p-value) so that all Z-values below p are set to 0.
+
+# Why: VLSM-output shows clusters that survived the perm test (cluster threshold) that fit (mask) over the ORIGINAL img_data,
+# but not over the thresholded img_data (= part 1 of the correction for MC process: set all img_data < Threshold to zero)
+
+# SO: if VLSM output, this script (these functions) will automatically compute thresholded results. If you want this otherwise,
+# change the variable VLSM_result to "no" (after 'main' statement)
+
 
 ### PIETER PART: hoeveel % van cluster ligt in bepaalde hersenregio
 # ------------------------------------------------------------------
@@ -98,14 +108,33 @@ harvard_brain_area_names = [ # source: https://scalablebrainatlas.incf.org/servi
 
 # als je dit per cluster wil weten, dan is dat een leuk projectje voor jezelf om eens uit te proberen, gebruik hiervoor code hierboven als startpunt; maak een for-loop over alle individuele clusters heen.
 
-def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path, tables_DIR
+def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path, tables_DIR,
+                                                VLSM_result = "yes", zthreshold = 1.645,
 
 ):
+    """
+
+    :param lesion_img_path: lesion masks
+    :param atlas_img_path: atlas (to base brain areas on)
+    :param tables_DIR: where to store the tables
+    :param VLSM_result: automatically "yes", then this  function will automatically compute thresholded results.
+    If you want this otherwise, change the variable VLSM_result to "no" (after 'main' statement)
+    :param zthreshold: if corrected, what z-value to threshold on (eg z = 1.645, corresponding to p 0.05)
+    :return:  how much % of the cluster lies in certain brain region? Will return a list of brain areas,
+    the amount of lesioned voxels in those brain areas, and the relative % of the total clustervolume that resides in
+    that brain region
+
+    note: sum will add to 100% (total cluster = 100%)
+    """
     ## Initialiseer variabelen
     img = nib.load(lesion_img_path)
-    surviving_clusters_data = img.get_fdata()  # negeer oranje stippellijn
+    lesion_data = img.get_fdata()  # negeer oranje stippellijn
+    if VLSM_result == "yes":
+        #set values lower than zthreshold to 0
+        # TODO: change this to > -zthreshold if focus is on negative z-values
+        lesion_data[lesion_data < zthreshold] = 0
     # TODO: pas dit aan afhankelijk van je interesse in positieve of negatieve z-waarden
-    data = surviving_clusters_data * 1  # bij positieve: *1; bij negatieve: soms doe ik *-1 om voor negatieve --> positieve Z-waarden te gaan omdat het makkelijker werkte met positieve z-waarden
+    data = lesion_data * 1  # bij positieve: *1; bij negatieve: soms doe ik *-1 om voor negatieve --> positieve Z-waarden te gaan omdat het makkelijker werkte met positieve z-waarden
     data[data > 0] = 1  # Z-waarden binary maken (niet meer geïnteresseerd in Z-waarden van de cluster, wel in welk hersengebied de cluster (= alles met z-waarde > 0) ligt
     # dus alleen interesse in OF een voxel behoort tot cluster (dan nl Z-waarde > 0 (behouden: maak van z-waarde een 1)) of niet (niet behouden: z-waarde blijft 0)
     total_voxels = np.sum(data)  # totaal aantal voxels van de cluster meten om later percentage te berekenen.
@@ -159,7 +188,7 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
 
     # ---- STEP 3: save Dataframe as excel in table data directory
     # TODO: pas naam van excel file zelf aan (.xlsx niet vergeten)
-    file_name = os.path.join(tables_DIR, "df_distribution_cluster_Factor_3.xlsx")
+    file_name = os.path.join(tables_DIR, "df_distribution_cluster_Factor_2_thresh.xlsx")
     df_distribution_cluster.to_excel(file_name, index=False)
         # https://www.geeksforgeeks.org/exporting-a-pandas-dataframe-to-an-excel-file/
 
@@ -169,8 +198,23 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
 
 ### CHAT GPT PART: hoeveel % van die hersenregio (in atlas) is ingenomen door cluster
 # -------------------------------------------------------------------------
-# TODO @ Ella: nog aan te passen!
-def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, tables_DIR):
+def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, tables_DIR,
+                                              VLSM_result="yes", zthreshold = 1.645):
+    """
+
+    :param lesion_img_path: lesion masks
+    :param atlas_img_path: atlas (to base brain areas on)
+    :param tables_DIR: where to store the tables
+    :param VLSM_result: automatically "yes", then this  function will automatically compute thresholded results.
+    If you want this otherwise, change the variable VLSM_result to "no" (after 'main' statement)
+    :param zthreshold: if corrected, what z-value to threshold on (eg z = 1.645, corresponding to p 0.05)
+    :return:  how much % of a certain brain region (atlas) is occupied by the cluster? a list of brain areas,
+    the amount of lesioned voxels in those brain areas, and the relative percentage of that brain area that is lesioned
+    (relative percentage of lesioned voxels in those brain areas)
+
+    note: sum will NOT add to 100% (nl per brain area, X% of that brain area is occupied by the cluster;
+    then for next area etc)
+    """
     ## Initialize
     # Load the lesion mask and atlas images
     lesion_img = nib.load(lesion_img_path)
@@ -178,6 +222,12 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
 
     # Get the data arrays for the lesion and atlas
     lesion_data = lesion_img.get_fdata()
+    if VLSM_result == "yes":
+        #set values lower than zthreshold to 0
+        # TODO: change this to > -zthreshold if focus is on negative z-values
+        lesion_data[lesion_data < zthreshold] = 0
+    # TODO: pas dit aan afhankelijk van je interesse in positieve of negatieve z-waarden
+
     atlas_data = atlas_img.get_fdata()
 
     ## Calculate percentages
@@ -240,7 +290,7 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
 
     # ---- STEP 3: save Dataframe as excel in table data directory
     # TODO: pas naam van excel file zelf aan (.xlsx niet vergeten)
-    file_name = os.path.join(tables_DIR, "df_distribution_atlas_Factor_3.xlsx")
+    file_name = os.path.join(tables_DIR, "df_distribution_atlas_Factor_2_thresh.xlsx")
     df_distribution_atlas.to_excel(file_name, index=False)
     # https://www.geeksforgeeks.org/exporting-a-pandas-dataframe-to-an-excel-file/
 
@@ -252,7 +302,7 @@ if __name__ == "__main__":
     # Define the file paths for the lesion mask and atlas image
     ## Initialize some variables
     # TODO: Vul dit zelf aan
-    lesion_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/surviving_clusters_Factor_3.nii"
+    lesion_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_2.nii"
         # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/sub-01.nii"
     # Path to lesion_mask (nifti-file), make sure to use / instead of \; and add .nii extension
     atlas_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/helper files/harvard_new.nii"
@@ -265,7 +315,19 @@ if __name__ == "__main__":
     # Path to tables
 
     # Calculate the cluster distribution
-    # calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path, tables_DIR)
+    calculate_lesion_distribution_cluster_based(
+        lesion_img_path,
+        atlas_img_path,
+        tables_DIR,
+        VLSM_result= "yes",
+        zthreshold = 1.645,
+    )
 
     # Calculate the lesion distribution
-    calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, tables_DIR)
+    calculate_lesion_distribution_atlas_based(
+        lesion_img_path,
+        atlas_img_path,
+        tables_DIR,
+        VLSM_result="yes",
+        zthreshold=1.645,
+    )
