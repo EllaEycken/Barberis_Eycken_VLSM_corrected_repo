@@ -48,7 +48,8 @@ def plot_VLSM_cluster(cluster_img_path, zthreshold = 1.645, correct = None,
     texture = surface.vol_to_surf(cluster_img, fsaverage.pial_left)
 
     # Ensure that texture values below the zthreshold are also set to zero
-    texture[texture < zthreshold] = 0
+    if correct is not None:
+        texture[texture < zthreshold] = 0
     # why: ChatGPT:
     # It's also possible that the thresholding operation (cluster_data[cluster_data < zthreshold] = 0) works correctly in the volume data, but when mapping to the surface (texture = surface.vol_to_surf(cluster_img, fsaverage.pial_left)), some values are interpolated or rounded, and values slightly below the threshold might appear.
     #
@@ -61,7 +62,7 @@ def plot_VLSM_cluster(cluster_img_path, zthreshold = 1.645, correct = None,
                                          colorbar=True, threshold=plot_threshold, cmap='twilight_shifted',
                                          bg_map=fsaverage.sulc_left) #vmin = zthreshold)
     figure.savefig(
-        f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_3_{name_add}_option2.svg")
+        f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_4_{name_add}.svg")
     # from plt.savefig(
     #         os.path.join(output_dir, "figures", f"feature_importances_{label}_{interview_part}.png"), dpi = 300)
     plotting.show()
@@ -73,12 +74,12 @@ if __name__ == "__main__":
     # Define the file paths for the lesion mask and atlas image
     ## Initialize some variables
     # TODO: Vul dit zelf aan
-    cluster_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/surviving_clusters_Factor_3.nii"
+    cluster_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_4.nii"
         # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/sub-01.nii"
     # Path to cluster img (nifti-file), make sure to use / instead of \; and add .nii extension
 
     # plot first unthresholded results
-    # plot_VLSM_cluster(cluster_img_path)
+    plot_VLSM_cluster(cluster_img_path)
 
     # plot thresholded results
-    plot_VLSM_cluster(cluster_img_path, correct = "yes", zthreshold=1.645)
+    # plot_VLSM_cluster(cluster_img_path, correct = "yes", zthreshold=1.645)
