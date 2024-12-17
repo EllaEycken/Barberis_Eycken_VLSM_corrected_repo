@@ -109,7 +109,7 @@ harvard_brain_area_names = [ # source: https://scalablebrainatlas.incf.org/servi
 # als je dit per cluster wil weten, dan is dat een leuk projectje voor jezelf om eens uit te proberen, gebruik hiervoor code hierboven als startpunt; maak een for-loop over alle individuele clusters heen.
 
 def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path, tables_DIR,
-                                                VLSM_result = "yes", zthreshold = 1.645,
+                                                VLSM_result = False, zthreshold = 0,
 
 ):
     """
@@ -117,9 +117,9 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
     :param lesion_img_path: lesion masks
     :param atlas_img_path: atlas (to base brain areas on)
     :param tables_DIR: where to store the tables
-    :param VLSM_result: automatically "yes", then this  function will automatically compute thresholded results.
-    If you want this otherwise, change the variable VLSM_result to "no" (after 'main' statement)
-    :param zthreshold: if corrected, what z-value to threshold on (eg z = 1.645, corresponding to p 0.05)
+    :param VLSM_result: automatically False, then this  function will not compute thresholded results.
+    If you want this otherwise, change the variable VLSM_result to True (after 'main' statement) and specify the zthreshold
+    :param zthreshold: automatically 0. If you want to have corrected results, specify what z-value to threshold on (eg z = 1.645, corresponding to p 0.05)
     :return:  how much % of the cluster lies in certain brain region? Will return a list of brain areas,
     the amount of lesioned voxels in those brain areas, and the relative % of the total clustervolume that resides in
     that brain region
@@ -129,23 +129,30 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
     ## Initialiseer variabelen
     img = nib.load(lesion_img_path)
     lesion_data = img.get_fdata()  # negeer oranje stippellijn
-    if VLSM_result == "yes":
-        #set values lower than zthreshold to 0
+    name_add = "no_thresh"
+
+    if VLSM_result is not False:
+        name_add = "thresh"
+        # set values lower than zthreshold to 0
         # TODO: change this to > -zthreshold if focus is on negative z-values
         lesion_data[lesion_data < zthreshold] = 0
-        # TODO: pas dit aan afhankelijk van je interesse in positieve of negatieve z-waarden
-        data = lesion_data * 1  # bij positieve: *1; bij negatieve: soms doe ik *-1 om voor negatieve --> positieve Z-waarden te gaan omdat het makkelijker werkte met positieve z-waarden
-        data = (lesion_data >= zthreshold).astype(int)  # Create a binary mask where values >= zthreshold are 1, and all others are 0 (based on ChatGPT)
-        # how is the above done:
-        # 1) It creates a boolean array where values greater than or equal to zthreshold are True and everything else is False.
-        # 2) Then, .astype(int) converts the boolean array to integers, where True becomes 1 and False becomes 0.
+        lesion_data[lesion_data >= zthreshold] = 1
+
+    ## Create a binary mask where values >= zthreshold are 1, and all others are 0 (based on ChatGPT)
     else:
-        # TODO: pas dit aan afhankelijk van je interesse in positieve of negatieve z-waarden
-        data = lesion_data * 1  # bij positieve: *1; bij negatieve: soms doe ik *-1 om voor negatieve --> positieve Z-waarden te gaan omdat het makkelijker werkte met positieve z-waarden
-        data[data > 0] = 1  # would be of risk to overwrite former parts
-    # Z-waarden binary maken (niet meer geïnteresseerd in Z-waarden van de cluster, wel in welk hersengebied de cluster (= alles met z-waarde > 0) ligt
+        lesion_data[lesion_data < zthreshold] = 0
+        lesion_data[lesion_data > zthreshold] = 1
+    # data = (lesion_data >= zthreshold).astype(int)
+    # how is the above done:
+    # 1) It creates a boolean array where values greater than zthreshold are True and everything else is False.
+    # 2) Then, .astype(int) converts the boolean array to integers, where True becomes 1 and False becomes 0.
+    # Why: Z-waarden binary maken (niet meer geïnteresseerd in Z-waarden van de cluster, wel in welk hersengebied de cluster (= alles met z-waarde > 0) ligt
     # dus alleen interesse in OF een voxel behoort tot cluster (dan nl Z-waarde > 0 (behouden: maak van z-waarde een 1)) of niet (niet behouden: z-waarde blijft 0)
+    print('data')
+    data = lesion_data
+
     total_voxels = np.sum(data)  # totaal aantal voxels van de cluster meten om later percentage te berekenen.
+    print('total voxels', total_voxels)
     atlas = nib.load(
         atlas_img_path).get_fdata()
 
@@ -194,9 +201,11 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
     pd.set_option("display.max.columns", None)
     df_distribution_cluster.style.background_gradient().set_caption("Cluster Distribution across Brain Areas (Harvard)")
 
+
     # ---- STEP 3: save Dataframe as excel in table data directory
     # TODO: pas naam van excel file zelf aan (.xlsx niet vergeten)
-    file_name = os.path.join(tables_DIR, "df_distribution_cluster_Factor_2_no_thresh_option2.xlsx")
+    file_name = os.path.join(tables_DIR, f"df_distribution_cluster_Factor_2_{name_add}_option2.xlsx")
+    # f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_4_{name_add}_check.svg")
     df_distribution_cluster.to_excel(file_name, index=False)
         # https://www.geeksforgeeks.org/exporting-a-pandas-dataframe-to-an-excel-file/
 
@@ -336,15 +345,15 @@ if __name__ == "__main__":
         lesion_img_path,
         atlas_img_path,
         tables_DIR,
-        VLSM_result= "no",
+        VLSM_result= True,
         zthreshold = 1.645,
     )
 
     # Calculate the lesion distribution
-    calculate_lesion_distribution_atlas_based(
+    """calculate_lesion_distribution_atlas_based(
         lesion_img_path,
         atlas_img_path,
         tables_DIR,
-        VLSM_result="no",
-        zthreshold=1.645,
-    )
+        VLSM_result = True,
+        zthreshold = 1.645,
+    )"""
