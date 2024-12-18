@@ -32,8 +32,12 @@ from bisect import bisect_left
 
 # IMPORTANT NOTE:
 # final results on Z-file and plot show perm-based z-clusters (that survived cluster threshold or that were large enough.
-# HOWEVER, the files still show the mask on top of the ORIGINAL img_data, so not on top of the THRESHOLDED ('uncorrected p-threshold') img_data
-# For further analyses, z-values below 'uncorrected' p-value must be EXCLUDED!
+# ((HOWEVER, the files still show the mask on top of the ORIGINAL img_data, so not on top of the THRESHOLDED ('uncorrected p-threshold') img_data
+# For further analyses, z-values below 'uncorrected' p-value must be EXCLUDED!))
+# !!! UPDATE: output VLSM-analysis IS correct (with cluster perm AND with only values above corrected p threshold, all below set to zero)
+# !!! further VLSM analyses:
+# - lesion_distribution_calculation.py: to examine in which regions the cluster lies
+# - VLSM_plotting.py: to plot VLSM results -> something goes wrong here (dd 18/12/2024: legenda is NOT correct; figure itself is correct)
 
 
 ## -- PREPARATIONS --
@@ -258,7 +262,11 @@ else:
     nib.save(surviving_clusters_img,"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/surviving_clusters_Factor_4.nii")
     # nib.save(surviving_clusters_img, 'path/to/save/surviving_clusters.nii') #pas pad aan, doe comment weg
 
-## IMPORTANT NOTE:
+# IMPORTANT NOTE:
 # final results on Z-file and plot show perm-based z-clusters (that survived cluster threshold or that were large enough.
-# HOWEVER, the files still show the mask on top of the ORIGINAL img_data, so not on top of the THRESHOLDED ('uncorrected p-threshold') img_data
-# For further analyses, z-values below 'uncorrected' p-value must be EXCLUDED!
+# ((HOWEVER, the files still show the mask on top of the ORIGINAL img_data, so not on top of the THRESHOLDED ('uncorrected p-threshold') img_data
+# For further analyses, z-values below 'uncorrected' p-value must be EXCLUDED!))
+# !!! UPDATE: output VLSM-analysis IS correct (with cluster perm AND with only values above corrected p threshold, all below set to zero)
+# !!! further VLSM analyses:
+# - lesion_distribution_calculation.py: to examine in which regions the cluster lies
+# - VLSM_plotting.py: to plot VLSM results -> something goes wrong here (dd 18/12/2024: legenda is NOT correct; figure itself is correct)
