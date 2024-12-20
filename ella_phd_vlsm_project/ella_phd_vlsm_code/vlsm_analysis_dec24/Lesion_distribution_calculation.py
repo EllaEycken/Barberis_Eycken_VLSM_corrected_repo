@@ -19,6 +19,9 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 import os
+
+from matplotlib import pyplot as plt
+
 # from ella_phd_vlsm_project.ella_phd_vlsm_code.constants import harvard_brain_area_names
 
 
@@ -110,7 +113,8 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
     the amount of lesioned voxels in those brain areas, and the relative % of the total clustervolume that resides in
     that brain region
 
-    note: sum will add to 100% (total cluster = 100%) unless some cluster parts end up in the 'background' region.
+    note: sum will add to 100% (total cluster = 100%) UNLESS some cluster parts end up in the 'background' region. Then,
+    check the atlas function to see how many voxels are in the background region.
     """
     ## Initialiseer variabelen
     img = nib.load(lesion_img_path)
@@ -161,7 +165,7 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
         list_brain_areas.append(i)
 
         # print("Hersengebied: {0}".format(
-            # i))  # dit is hersengebied index van die atlas. Laadt die atlas eens in in mricrogl en zoek uit welke index tot welk hersengebied behoort.
+            # i))  # dit is hersengebied index van die atlas. Laad die atlas eens in in mricrogl en zoek uit welke index tot welk hersengebied behoort.
         # print("Percentage: {0}%".format(percentage_i)  # percentage
 
 
@@ -183,7 +187,7 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
 
     # ---- STEP 3: save Dataframe as excel in table data directory
     # TODO: pas naam van excel file zelf aan (.xlsx niet vergeten)
-    file_name = os.path.join(tables_DIR, f"df_distribution_cluster_Factor_4.xlsx")
+    file_name = os.path.join(tables_DIR, f"df_distribution_cluster_Factor_2_with_background.xlsx")
     # from: f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_4_{name_add}_check.svg")
     df_distribution_cluster.to_excel(file_name, index=False)
         # https://www.geeksforgeeks.org/exporting-a-pandas-dataframe-to-an-excel-file/
@@ -288,13 +292,13 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
     # discard those rows of df that have 0% overlap with the cluster
     df_distribution_atlas = df_distribution_atlas[df_distribution_atlas["Region Percentage"] != 0.0]
     # discard first row if that row is the background region:
-    if df_distribution_atlas["Brain Region Number"][0] == 0: # number 0 in Harvard atlas = background region
-        df_distribution_atlas = df_distribution_atlas.iloc[1:]
-        df_distribution_atlas.reset_index(drop = True, inplace = True)
+    # if df_distribution_atlas["Brain Region Number"][0] == 0: # number 0 in Harvard atlas = background region
+        # df_distribution_atlas = df_distribution_atlas.iloc[1:]
+        # df_distribution_atlas.reset_index(drop = True, inplace = True)
 
     # ---- STEP 3: save Dataframe as excel in table data directory
     # TODO: pas naam van excel file zelf aan (.xlsx niet vergeten)
-    file_name = os.path.join(tables_DIR, "df_distribution_atlas_Factor_4.xlsx")
+    file_name = os.path.join(tables_DIR, "df_distribution_atlas_Factor_2_with background.xlsx")
     df_distribution_atlas.to_excel(file_name, index=False)
     # https://www.geeksforgeeks.org/exporting-a-pandas-dataframe-to-an-excel-file/
 
@@ -314,6 +318,13 @@ def locate_peak_value(lesion_img_path, atlas_img_path
 
     # Find the index of the voxel with the highest value (eg z-value)
     highest_value_index = np.unravel_index(np.argmax(lesion_data), lesion_data.shape)
+    # highest_z_index = np.argmax(z_data) gives you the index of the voxel with the highest z-value.
+    # This is a 1D index for the flattened array, which corresponds to a voxel in the 3D grid.
+    # then: Since np.argmax will return a flat index (for a 3D array), you need to convert it to
+    # multi-dimensional coordinates (x, y, z) with np.unravel_index().
+    # Using the coordinates obtained from np.unravel_index, you can access the corresponding voxel in the atlas_data
+    # and get the region index for that voxel.
+    # source: chatgpt
 
     # Get the region index from the Harvard Oxford Atlas at that voxel
     region_index = atlas_data[highest_value_index]
@@ -329,11 +340,57 @@ def locate_peak_value(lesion_img_path, atlas_img_path
 
 
 
+def make_table_histogram(distribution_excel
+                         ):
+
+    # TODO: does not work!
+    # Read in excel file
+    data = pd.read_excel(distribution_excel)
+
+    # Create a pandas DataFrame
+    df = pd.DataFrame(data)
+
+    # Create subplots for the table and bar graphs for each column
+    fig, axes = plt.subplots(1, len(df.columns), figsize=(15, 5))
+
+    # Plot the table in the first subplot
+    axes[0].axis('off')  # Turn off axes for the table
+    axes[0].table(cellText=df.values, colLabels=df.columns, loc='center', cellLoc='center')
+
+    # Plot bar graphs for each column in the DataFrame
+    for i, column in enumerate(df.columns):
+        # Skip the first axis since it's reserved for the table
+        if i == 0:
+            continue
+
+        # Plot bar graph for each column (excluding the 'Name' column, which is non-numeric)
+        axes[i].bar(df.index, df[column], color='skyblue', edgecolor='black')
+        axes[i].set_title(f'Bar Graph of {column}')
+        axes[i].set_xlabel('Index (Row)')
+        axes[i].set_ylabel(f'{column} Value')
+
+        # Add value annotations on top of each bar
+        # for j, value in enumerate(df[column]):
+            # axes[i].text(j, value + 0.5, str(value), ha='center', va='bottom', fontsize=10)
+
+    # Adjust layout to avoid overlap and make sure the table and bar graphs are clearly visible
+    plt.tight_layout()
+    plt.show()
+
+    # Optionally save the figure
+    plt.savefig(
+        f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_Factor_3_distribution_table_histogram.svg")
+    # from plt.savefig(
+    #         os.path.join(output_dir, "figures", f"feature_importances_{label}_{interview_part}.png"), dpi = 300)
+    plt.show()
+
+
+
 if __name__ == "__main__":
     # Define the file paths for the lesion mask and atlas image
     ## Initialize some variables
     # TODO: Vul dit zelf aan
-    lesion_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/surviving_clusters_Factor_3.nii"
+    lesion_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_2.nii"
         # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/sub-01.nii"
     # Path to lesion_mask (nifti-file), make sure to use / instead of \; and add .nii extension
     atlas_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/helper files/harvard_new.nii"
@@ -344,22 +401,26 @@ if __name__ == "__main__":
     # werk je wel in dezelfde dimensies. Werk dan met die nieuwe harvard_new.nii in dit script. Zie ook de manual van de VLSM op de L-schijf bij punt 6. Troubleshooting.
     tables_DIR = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/tables"
     # Path to tables
+    # distribution_excel = os.path.join(tables_DIR, "df_distribution_atlas_cluster_Factor_3.xlsx")
 
     # Calculate the cluster distribution
-    """calculate_lesion_distribution_cluster_based(
+    calculate_lesion_distribution_cluster_based(
         lesion_img_path,
         atlas_img_path,
         tables_DIR,
-    )"""
+    )
 
     # Calculate the lesion distribution
-    """calculate_lesion_distribution_atlas_based(
+    calculate_lesion_distribution_atlas_based(
         lesion_img_path,
         atlas_img_path,
         tables_DIR,
-    )"""
+    )
 
     locate_peak_value(
         lesion_img_path,
         atlas_img_path,
     )
+
+    # make_table_histogram(distribution_excel)
+

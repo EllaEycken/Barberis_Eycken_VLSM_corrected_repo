@@ -109,7 +109,7 @@ def plot_VLSM_cluster_new(cluster_img_path, zthreshold=1.645
                                          symmetric_cbar=False,  # Colorbar is not symmetric around 0
                                          colorbar=True,  # Display colorbar
                                          threshold= zthreshold,  # Apply threshold for better visibility (z-threshold)
-                                         cmap = 'Greens',
+                                         cmap = 'Reds',
                                          # cmap='twilight_shifted',  # A perceptually uniform colormap
                                          bg_map=fsaverage.sulc_left,  # Use sulcal depth as background map
                                          vmin = zthreshold - 0.001,
@@ -118,7 +118,7 @@ def plot_VLSM_cluster_new(cluster_img_path, zthreshold=1.645
 
     # Optionally save the figure
     figure.savefig(
-        f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_3_option2.svg")
+        f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_4_red.png")
     # from plt.savefig(
     #         os.path.join(output_dir, "figures", f"feature_importances_{label}_{interview_part}.png"), dpi = 300)
     plotting.show()
@@ -133,10 +133,10 @@ def plot_VLSM_cluster_axial(cluster_img_path,zthreshold=1.645
 
     ## Plot met tresholds
     plotting.plot_roi(cluster_img, cut_coords=(-20, -4, 12, 20, 28, 36),
-                      display_mode='z', colorbar=True, cmap='Greens',threshold= zthreshold-0.001,vmax= 5) # threshold=zthreshold)
+                      display_mode='z', colorbar=True, cmap='Reds',threshold= zthreshold-0.001,vmax= 5) # threshold=zthreshold)
 
     ## Save figure
-    plt.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_3_axial.png")
+    plt.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_4_axial.png")
     plotting.show()
 
 
@@ -201,7 +201,7 @@ if __name__ == "__main__":
     # Define the file paths for the lesion mask and atlas image
     ## Initialize some variables
     # TODO: Vul dit zelf aan
-    cluster_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/surviving_clusters_Factor_3.nii"
+    cluster_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_4.nii"
         # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/sub-01.nii"
     # Path to cluster img (nifti-file), make sure to use / instead of \; and add .nii extension
     threshold = 1.645
@@ -216,8 +216,8 @@ if __name__ == "__main__":
     print(f"Maximum value of voxels below the threshold: {max_below}")
     print(f"Number of voxels above zero: {above_zero}")"""
 
-    # plot_VLSM_cluster_new(cluster_img_path)
-    # plot_VLSM_cluster_axial(cluster_img_path)
+    plot_VLSM_cluster_new(cluster_img_path)
+    plot_VLSM_cluster_axial(cluster_img_path)
     # plot_VLSM_cluster(cluster_img_path)
 
 
