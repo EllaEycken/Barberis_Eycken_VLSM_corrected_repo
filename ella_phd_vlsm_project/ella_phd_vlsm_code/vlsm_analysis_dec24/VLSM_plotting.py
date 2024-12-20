@@ -66,7 +66,20 @@ def check_VLSM_output_by_threshold(cluster_img_path, threshold):
     # Get the number of voxels above 0
     voxels_above_zero = np.sum(img_data > 0)
 
-    return voxels_above_threshold, voxels_below_threshold, min_value_below_threshold, max_value_below_threshold, voxels_above_zero
+    # output results
+    print('voxels_above_threshold', voxels_above_threshold)
+    print('voxels_below_threshold', voxels_below_threshold)
+
+    print('min_value_above_threshold', min_value_above_threshold)
+    print('max_value_above_threshold', max_value_above_threshold)
+
+    print('min_value_below_threshold', min_value_below_threshold)
+    print('max_value_below_threshold', max_value_below_threshold)
+
+    print('voxels_above_zero', voxels_above_zero)
+
+    return (voxels_above_threshold, voxels_below_threshold, min_value_above_threshold, max_value_above_threshold,
+            min_value_below_threshold, max_value_below_threshold, voxels_above_zero)
 
 
 def plot_VLSM_cluster_new(cluster_img_path, zthreshold=1.645
@@ -194,7 +207,7 @@ if __name__ == "__main__":
     threshold = 1.645
 
     # Get the voxel counts
-    # above, below, min_below, max_below, above_zero = check_VLSM_output_by_threshold(cluster_img_path, threshold)
+    check_VLSM_output_by_threshold(cluster_img_path, threshold)
 
     # Output the result
     """print(f"Number of voxels above the threshold: {above}")
@@ -204,7 +217,7 @@ if __name__ == "__main__":
     print(f"Number of voxels above zero: {above_zero}")"""
 
     # plot_VLSM_cluster_new(cluster_img_path)
-    plot_VLSM_cluster_axial(cluster_img_path)
+    # plot_VLSM_cluster_axial(cluster_img_path)
     # plot_VLSM_cluster(cluster_img_path)
 
 

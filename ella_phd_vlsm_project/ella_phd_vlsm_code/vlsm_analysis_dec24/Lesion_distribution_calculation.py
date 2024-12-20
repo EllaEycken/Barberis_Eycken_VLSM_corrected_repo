@@ -302,11 +302,38 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
 
 
 
+def locate_peak_value(lesion_img_path, atlas_img_path
+                        ):
+    # Load the lesion image and Harvard Oxford Atlas
+    lesion_img = nib.load(lesion_img_path)
+    atlas_img = nib.load(atlas_img_path)
+
+    # Get the data arrays from the NIfTI images
+    lesion_data = lesion_img.get_fdata()
+    atlas_data = atlas_img.get_fdata()
+
+    # Find the index of the voxel with the highest value (eg z-value)
+    highest_value_index = np.unravel_index(np.argmax(lesion_data), lesion_data.shape)
+
+    # Get the region index from the Harvard Oxford Atlas at that voxel
+    region_index = atlas_data[highest_value_index]
+    region_name = harvard_brain_area_names[int(region_index)]
+
+    # print results
+    print('highest_value',np.max(lesion_data) )  # not argmax: argmax gives coordinates (in original file) of max value
+    print('highest_value_index', highest_value_index)
+    print('region_index', region_index)
+    print('region_name', region_name)
+
+    return highest_value_index, region_index, region_name
+
+
+
 if __name__ == "__main__":
     # Define the file paths for the lesion mask and atlas image
     ## Initialize some variables
     # TODO: Vul dit zelf aan
-    lesion_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_4.nii"
+    lesion_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/surviving_clusters_Factor_3.nii"
         # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/sub-01.nii"
     # Path to lesion_mask (nifti-file), make sure to use / instead of \; and add .nii extension
     atlas_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/helper files/harvard_new.nii"
@@ -319,15 +346,20 @@ if __name__ == "__main__":
     # Path to tables
 
     # Calculate the cluster distribution
-    calculate_lesion_distribution_cluster_based(
+    """calculate_lesion_distribution_cluster_based(
         lesion_img_path,
         atlas_img_path,
         tables_DIR,
-    )
+    )"""
 
     # Calculate the lesion distribution
-    calculate_lesion_distribution_atlas_based(
+    """calculate_lesion_distribution_atlas_based(
         lesion_img_path,
         atlas_img_path,
         tables_DIR,
+    )"""
+
+    locate_peak_value(
+        lesion_img_path,
+        atlas_img_path,
     )
