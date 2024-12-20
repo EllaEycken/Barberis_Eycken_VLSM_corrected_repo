@@ -110,7 +110,7 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
     the amount of lesioned voxels in those brain areas, and the relative % of the total clustervolume that resides in
     that brain region
 
-    note: sum will add to 100% (total cluster = 100%)
+    note: sum will add to 100% (total cluster = 100%) unless some cluster parts end up in the 'background' region.
     """
     ## Initialiseer variabelen
     img = nib.load(lesion_img_path)

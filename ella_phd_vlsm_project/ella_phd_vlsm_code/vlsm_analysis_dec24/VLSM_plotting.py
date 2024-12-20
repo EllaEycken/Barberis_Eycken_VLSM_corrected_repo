@@ -94,15 +94,17 @@ def plot_VLSM_cluster_new(cluster_img_path, zthreshold=1.645
                                          title='Cluster Image on Left Hemisphere',  # Title of the plot
                                          symmetric_cbar=False,  # Colorbar is not symmetric around 0
                                          colorbar=True,  # Display colorbar
-                                         # threshold= zthreshold-0.045,  # Apply threshold for better visibility (z-threshold)
-                                         cmap='twilight_shifted',  # A perceptually uniform colormap
+                                         threshold= zthreshold,  # Apply threshold for better visibility (z-threshold)
+                                         cmap = 'Greens',
+                                         # cmap='twilight_shifted',  # A perceptually uniform colormap
                                          bg_map=fsaverage.sulc_left,  # Use sulcal depth as background map
-                                         vmin=z_min,  # Set minimum value for the color scale (real z-values)
+                                         vmin = zthreshold - 0.001,
+                                         # vmin=z_min,  # Set minimum value for the color scale (real z-values)
                                          vmax=z_max)  # Set maximum value for the color scale (real z-values)
 
     # Optionally save the figure
     figure.savefig(
-        f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_4_option8.svg")
+        f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_3_option2.svg")
     # from plt.savefig(
     #         os.path.join(output_dir, "figures", f"feature_importances_{label}_{interview_part}.png"), dpi = 300)
     plotting.show()
@@ -169,7 +171,7 @@ if __name__ == "__main__":
     # Define the file paths for the lesion mask and atlas image
     ## Initialize some variables
     # TODO: Vul dit zelf aan
-    cluster_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_4.nii"
+    cluster_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/surviving_clusters_Factor_3.nii"
         # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/sub-01.nii"
     # Path to cluster img (nifti-file), make sure to use / instead of \; and add .nii extension
     threshold = 1.645
