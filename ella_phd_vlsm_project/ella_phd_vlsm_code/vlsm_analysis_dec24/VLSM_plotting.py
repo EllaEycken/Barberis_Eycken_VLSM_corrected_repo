@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import os
 
+from matplotlib import pyplot as plt
 from nilearn.image import load_img
 from scipy import ndimage
 from nilearn import plotting, datasets, surface
@@ -110,6 +111,22 @@ def plot_VLSM_cluster_new(cluster_img_path, zthreshold=1.645
     plotting.show()
 
 
+def plot_VLSM_cluster_axial(cluster_img_path,zthreshold=1.645
+                            ):
+
+    # Load the data
+    cluster_img = nib.load(cluster_img_path)
+    # cluster_data = img.get_fdata()  # negeer oranje stippellijn
+
+    ## Plot met tresholds
+    plotting.plot_roi(cluster_img, cut_coords=(-20, -4, 12, 20, 28, 36),
+                      display_mode='z', colorbar=True, cmap='Greens',threshold= zthreshold-0.001,vmax= 5) # threshold=zthreshold)
+
+    ## Save figure
+    plt.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_3_axial.png")
+    plotting.show()
+
+
 def plot_VLSM_cluster(cluster_img_path,
 
 ):
@@ -186,5 +203,8 @@ if __name__ == "__main__":
     print(f"Maximum value of voxels below the threshold: {max_below}")
     print(f"Number of voxels above zero: {above_zero}")"""
 
-    plot_VLSM_cluster_new(cluster_img_path)
+    # plot_VLSM_cluster_new(cluster_img_path)
+    plot_VLSM_cluster_axial(cluster_img_path)
     # plot_VLSM_cluster(cluster_img_path)
+
+
