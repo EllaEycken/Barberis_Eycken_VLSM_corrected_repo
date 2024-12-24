@@ -2,6 +2,8 @@
 ## Description
 # This script allows for plotting the results of a VLSM-analysis.
 
+# NOTE: all VLSM output is with ABSOLUTE z-values !!! so no negative z-values !!!
+
 
 ## Imports
 import nibabel as nib
@@ -38,11 +40,14 @@ curv_left_sign = np.sign(curv_left)
 
 
 ## FUNCTIONS
-def check_VLSM_output_by_threshold(cluster_img_path, threshold):
+def check_VLSM_output_by_threshold(cluster_img_path, threshold = 1.645):
     # Load the NIfTI image using nibabel
     img = nib.load(cluster_img_path)
 
     # Get the image data as a numpy array
+    img_data = img.get_fdata()
+
+    img = nib.Nifti1Image(img_data, img.affine)
     img_data = img.get_fdata()
 
     # Get the values of voxels below the threshold
@@ -65,6 +70,7 @@ def check_VLSM_output_by_threshold(cluster_img_path, threshold):
 
     # Get the number of voxels above 0
     voxels_above_zero = np.sum(img_data > 0)
+    voxels_below_zero = np.sum(img_data < 0)
 
     # output results
     print('voxels_above_threshold', voxels_above_threshold)
@@ -77,9 +83,10 @@ def check_VLSM_output_by_threshold(cluster_img_path, threshold):
     print('max_value_below_threshold', max_value_below_threshold)
 
     print('voxels_above_zero', voxels_above_zero)
+    print('voxels_below_zero', voxels_below_zero)
 
     return (voxels_above_threshold, voxels_below_threshold, min_value_above_threshold, max_value_above_threshold,
-            min_value_below_threshold, max_value_below_threshold, voxels_above_zero)
+            min_value_below_threshold, max_value_below_threshold, voxels_above_zero, voxels_below_zero)
 
 
 def plot_VLSM_cluster_new(cluster_img_path, zthreshold=1.645
@@ -87,7 +94,6 @@ def plot_VLSM_cluster_new(cluster_img_path, zthreshold=1.645
                           ):
     # Load the data
     cluster_img = nib.load(cluster_img_path)
-    # cluster_data = img.get_fdata()  # negeer oranje stippellijn
 
     # Load fsaverage surface data (can be customized depending on your study)
     fsaverage = datasets.fetch_surf_fsaverage()
@@ -100,6 +106,11 @@ def plot_VLSM_cluster_new(cluster_img_path, zthreshold=1.645
     z_min = np.min(z_values)
     z_max = np.max(z_values)
 
+
+    plot_threshold = zthreshold
+    plot_max = z_max
+    plot_min = zthreshold - 0.001
+
     # Plot the surface map
     figure = plotting.plot_surf_stat_map(surf_mesh=fsaverage.infl_left,
                                          # Use the inflated mesh for better visualization
@@ -108,35 +119,39 @@ def plot_VLSM_cluster_new(cluster_img_path, zthreshold=1.645
                                          title='Cluster Image on Left Hemisphere',  # Title of the plot
                                          symmetric_cbar=False,  # Colorbar is not symmetric around 0
                                          colorbar=True,  # Display colorbar
-                                         threshold= zthreshold,  # Apply threshold for better visibility (z-threshold)
-                                         cmap = 'Reds',
+                                         threshold= plot_threshold,  # Apply threshold for better visibility (z-threshold)
+                                         cmap = colour,
                                          # cmap='twilight_shifted',  # A perceptually uniform colormap
                                          bg_map=fsaverage.sulc_left,  # Use sulcal depth as background map
-                                         vmin = zthreshold - 0.001,
+                                         vmin = plot_min,
                                          # vmin=z_min,  # Set minimum value for the color scale (real z-values)
-                                         vmax=z_max)  # Set maximum value for the color scale (real z-values)
+                                         vmax=plot_max)  # Set maximum value for the color scale (real z-values)
 
     # Optionally save the figure
-    figure.savefig(
-        f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_4_red.png")
+    figure.savefig(os.path.join(save_plot_path, f"{variable}_{plot_type}_surf_threshview.png"))
     # from plt.savefig(
     #         os.path.join(output_dir, "figures", f"feature_importances_{label}_{interview_part}.png"), dpi = 300)
     plotting.show()
 
 
-def plot_VLSM_cluster_axial(cluster_img_path,zthreshold=1.645
+def plot_VLSM_cluster_axial(cluster_img_path, zthreshold=1.645
                             ):
 
     # Load the data
     cluster_img = nib.load(cluster_img_path)
     # cluster_data = img.get_fdata()  # negeer oranje stippellijn
 
+    # Ensure colorbar shows the real z-values by determining the minimum and maximum z-values in your cluster_img
+    z_values = cluster_img.get_fdata()
+    # switch datatype if necessary
+    zmax = round(np.max(z_values))
+
     ## Plot met tresholds
     plotting.plot_roi(cluster_img, cut_coords=(-20, -4, 12, 20, 28, 36),
-                      display_mode='z', colorbar=True, cmap='Reds',threshold= zthreshold-0.001,vmax= 5) # threshold=zthreshold)
+                      display_mode='z', colorbar=True, cmap= colour,threshold= zthreshold-0.001,vmax= zmax) # threshold=zthreshold)
 
     ## Save figure
-    plt.savefig("L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_4_axial.png")
+    plt.savefig(os.path.join(save_plot_path, f"{variable}_{plot_type}_axial_threshview.png"))
     plotting.show()
 
 
@@ -201,13 +216,44 @@ if __name__ == "__main__":
     # Define the file paths for the lesion mask and atlas image
     ## Initialize some variables
     # TODO: Vul dit zelf aan
-    cluster_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_4.nii"
+    variable = "ANTAT_TTR"
+    variable_type = "Lexical"  # choices: see below
+    cluster_is_significant = True  # switch to false if not sign cluster
+    path_to_VLSM_folder = "C:/Users/u0146803/Documents/VLSM_masterthesis"
+    corrected_VLSM_output_folder_name = "VLSM_ANTAT_perm_1000_lesionregr_MCcorrected"
+    threshold_abs = 1.645
+
+    # Pas dit niet zelf aan
+    if cluster_is_significant:
+        cluster_type = "surviving_clusters"
+        plot_type = 'sign'
+    else:
+        cluster_type = "nonsign_cluster"
+        plot_type = 'nonsign'
+
+    if variable_type == "Semantics":
+        colour = 'Oranges'
+    elif variable_type == "Phonology":
+        colour = 'Blues'
+    elif variable_type == "Lexical":
+        colour = "Greens"
+    elif variable_type == "Grammatical":
+        colour = "Reds"
+    elif variable_type == "Macrostructure":
+        colour = "Purples"
+    elif variable_type == "Fluency":
+        colour = "YlOrBr"  # yellows doesn't exist
+    # source: https://matplotlib.org/stable/users/explain/colors/colormaps.html
+
+    cluster_img_path = os.path.join(path_to_VLSM_folder, 'output', corrected_VLSM_output_folder_name, f"Z{cluster_type}_{variable}.nii")
+        # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_4.nii"
         # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/sub-01.nii"
     # Path to cluster img (nifti-file), make sure to use / instead of \; and add .nii extension
-    threshold = 1.645
+    save_plot_path = os.path.join(path_to_VLSM_folder, 'figures')
+
 
     # Get the voxel counts
-    check_VLSM_output_by_threshold(cluster_img_path, threshold)
+    check_VLSM_output_by_threshold(cluster_img_path, threshold_abs)
 
     # Output the result
     """print(f"Number of voxels above the threshold: {above}")
@@ -216,8 +262,8 @@ if __name__ == "__main__":
     print(f"Maximum value of voxels below the threshold: {max_below}")
     print(f"Number of voxels above zero: {above_zero}")"""
 
-    plot_VLSM_cluster_new(cluster_img_path)
-    plot_VLSM_cluster_axial(cluster_img_path)
+    plot_VLSM_cluster_new(cluster_img_path, threshold_abs)
+    plot_VLSM_cluster_axial(cluster_img_path, threshold_abs)
     # plot_VLSM_cluster(cluster_img_path)
 
 

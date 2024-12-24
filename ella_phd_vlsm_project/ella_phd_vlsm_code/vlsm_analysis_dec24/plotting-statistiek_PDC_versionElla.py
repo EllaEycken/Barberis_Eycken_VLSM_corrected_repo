@@ -45,15 +45,15 @@ from bisect import bisect_left
 
 ## Specifieer volgende variabelen telkens (bij elke run) ZELF
 # TODO: specifieer dit allemaal ZELF (tem 'focus_on_positive_zvalues'
-variable = "ANTAT_afgebrokenwoord"
+variable = "ANTAT_speechrate"
 path_to_VLSM_folder = "C:/Users/u0146803/Documents/VLSM_masterthesis"
-uncorrected_VLSM_output_folder= "VLSM_ANTAT_perm_1000_lesionregr_23Dec2024_224000"  # this is the output file of NiiStat (with no corrections for multiple comparisons)
-uncorrected_z_map = '_'.join(uncorrected_VLSM_output_folder.split("_")[:4])  # should be: VLSM_ANTAT_perm_1000_lesionregr
-corrected_VLSM_output_folder = "VLSM_ANTAT_perm_1000_lesionregr_MCcorrected"  # this WILL be the output file of the Multiple Comparisons correction performed in this script
+uncorrected_VLSM_output_folder_name= "VLSM_ANTAT_perm_1000_lesionregr_23Dec2024_224000"  # this is the output file of NiiStat (with no corrections for multiple comparisons)
+uncorrected_z_map = '_'.join(uncorrected_VLSM_output_folder_name.split("_")[:5])  # should be: VLSM_ANTAT_perm_1000_lesionregr
+corrected_VLSM_output_folder_name = "VLSM_ANTAT_perm_1000_lesionregr_MCcorrected"  # this WILL be the output file of the Multiple Comparisons correction performed in this script
 uncorrected_pthreshold = 0.05
 corrected_pthreshold = 0.05
 nb_of_permutations = 1000
-focus_on_positive_zvalues = True  # noteer False indien focus op NEGATIEVE z-waarden
+focus_on_positive_zvalues = False  # noteer False indien focus op NEGATIEVE z-waarden
 
 
 ## Andere variabelen die geïnitialiseerd worden (NIET aan te passen):
@@ -127,7 +127,7 @@ def take_closest(myList, myNumber):
 # dit doe ik nu bij data van mijn VLSM paper. Die data staan onder "paper4_VLSM_aphasia", bij output --> permTest
 # toevoeging door Ella: door dit voor IEDERE variable of interest!
 # TODO: PAD zelf aanpassen
-variable_perm_path = os.path.join(path_to_VLSM_folder, 'output','permTest',f"{variable}/")
+variable_perm_path = os.path.join(path_to_VLSM_folder, 'output/permTest',f"{variable}/")
     # ("C:/Users/u0146803/Documents/VLSM_masterthesis/output/permTest/ANTAT_afgebrokenwoord/")
     #"E:/vlsm_scratch/output/permTest/broad40_all/"  # lokaal laten lopen, pas het pad zelf aan
     # pas op: na naam variable ook '/' zetten!
@@ -164,8 +164,8 @@ for file in allPerms:
 ranked_values = np.sort(size)[::-1]  # rank ze (-1 statement staat voor descending order (van groot nr klein))
 # TODO: Pas ranked_values[X] aan indien je voor een ander aantal permutaties hebt gekozen EN indien andere corrected p-treshold
 #  (Pieter: 1000 permutaties => corrected p treshold p=0.05 komt overeen met N=50 dus 50e cluster size kiezen als cluster_treshold)
-xth_largest_perm_cluster = corrected_pthreshold * nb_of_permutations
-cluster_threshold = ranked_values[xth_largest_perm_cluster]
+index_perm_cluster_threshold= int((corrected_pthreshold * nb_of_permutations)-1) # neem de 50ste (start te tellen vanaf 0 dus daarom 49)
+cluster_threshold = ranked_values[index_perm_cluster_threshold]
 # cluster_threshold = ranked_values[49]  # neem de 50ste (start te tellen vanaf 0 dus daarom 49)
 
 print("cluster threshold: N = {0}".format(cluster_threshold))
@@ -175,7 +175,7 @@ print("cluster threshold: N = {0}".format(cluster_threshold))
 # --------------------------------------------------------------------------------------
 # nu gaan we kijken naar de effectieve Z-map (NIET permTest map).
 # TODO: PAD zelf aanpassen (opnieuw PER VARIABELE, doe dit dus voor zelfde variabele als die je specifieerde hierboven)
-img = nib.load(os.path.join(path_to_VLSM_folder, 'output', uncorrected_VLSM_output_folder, f"{uncorrected_z_map}{variable}.nii"))
+img = nib.load(os.path.join(path_to_VLSM_folder, 'output', uncorrected_VLSM_output_folder_name, f"Z{uncorrected_z_map}{variable}.nii"))
 # "C:/Users/u0146803/Documents/VLSM_masterthesis/output/VLSM_ANTAT_perm_1000_lesionregr_23Dec2024_224000/ZVLSM_ANTAT_perm_1000_lesionregrANTAT_afgebrokenwoord.nii")
     #'D:/PhD Pieter De Clercq/paper4_VLSM_aphasia/output/final___31Jan2024_103046/Zfinal__broad40_all.nii')  # laad je data. Staat in mapje paper4_VLSM_aphasia, pas aan (heb dit lokaal laten lopen)
 img_data = img.get_fdata()
@@ -224,12 +224,8 @@ if len(surviving_clusters) == 0:
     # decide on largest cluster img data
     largest_cluster = np.where(cluster_sizes == largest_cluster_size)[0]
     # largest_cluster = np.where(np.max(cluster_sizes))[0]  # should return index of the largest cluster
-    print('largest cluster', largest_cluster)
     largest_cluster_mask = np.isin(labeled_clusters, largest_cluster)
-    print('labeled clusters', labeled_clusters)
-    print('largest cluster mask', largest_cluster_mask)
     largest_cluster_data = img_data * largest_cluster_mask
-    print('largest cluster data', largest_cluster_data)
     # TODO: Pas dit zelf aan afhankelijk van interesse in POSITIEVE (* 1; of volgende lijn outcommenten want geen effect) of NEGATIEVE (* -1) z-waarden
     if focus_on_positive_zvalues:
         largest_cluster_data = largest_cluster_data * 1 # die 1 (positieve) of -1 (negatieve) hangt af of je geïnteresseerd bent in negatieve of positieve Z-waarden. Speel hiermee tot je zelf hebt wat je wil
@@ -254,12 +250,9 @@ if len(surviving_clusters) == 0:
 
 else:  # indien er wel iets overleeft, loop ik over alle clusters die cluster threshold overleven:
     for this_cluster in surviving_clusters:
-        print ('this_cluster', this_cluster)
         # clusters die het niet overleven, zet ik hieronder op 0. Dan ga ik er per cluster door. 3 lijntjes code hieronder
         surviving_clusters_mask = np.isin(labeled_clusters, this_cluster)
-        print('surviving_cluster_mask', surviving_clusters_mask)
         surviving_clusters_data = img_data * surviving_clusters_mask
-        print('surviving clusters data', surviving_clusters_data)
         # TODO: Pas dit zelf aan afhankelijk van interesse in POSITIEVE (* 1; of volgende lijn outcommenten want geen effect) of NEGATIEVE (* -1) z-waarden
         if focus_on_positive_zvalues:
             surviving_clusters_data = surviving_clusters_data * 1  # die 1 (positieve) of -1 (negatieve) hangt af of je geïnteresseerd bent in negatieve of positieve Z-waarden. Speel hiermee tot je zelf hebt wat je wil
@@ -307,7 +300,7 @@ else:  # indien er wel iets overleeft, loop ik over alle clusters die cluster th
 if len(surviving_clusters) == 0:
     # TODO: PAD zelf aanpassen (kies passende naam, met specificatie van Pad naar output file "VLSM/Permutatie_analyse_MCcorrected/Znonsign_clusters_VARIABELE die je specifieerde hierboven.nii")
     nib.save(largest_cluster_img,
-             filename = os.path.join(path_to_VLSM_folder, 'output', corrected_VLSM_output_folder, f"Znonsign_cluster_{variable}.nii"))
+             filename = os.path.join(path_to_VLSM_folder, 'output', corrected_VLSM_output_folder_name, f"Znonsign_cluster_{variable}.nii"))
 
              #"C:/Users/u0146803/Documents/VLSM_masterthesis/output/VLSM_correctedMC/Znonsign_clusters_ANTAT_afgebrokenwoord.nii")
     # nib.save(surviving_clusters_img, 'path/to/save/nonsign_cluster.nii') #pas pad aan, doe comment weg
@@ -315,7 +308,7 @@ else:
     # TODO: PAD zelf aanpassen (kies passende naam, met specificatie van Pad naar output file "VLSM/Permutatie_analyse_MCcorrected/Zsurviving_clusters_VARIABELE die je specifieerde hierboven.nii")
     # Note: als VLSM analyse geen enkele cluster vindt, zal deze lijn een error geven (omdat surviving_clusters_img dan niet gedefinieerd wordt), negeer die Error (is niet erg)
     nib.save(surviving_clusters_img,
-             filename = os.path.join(path_to_VLSM_folder, 'output', corrected_VLSM_output_folder, f"Zsurviving_clusters_{variable}.nii"))
+             filename = os.path.join(path_to_VLSM_folder, 'output', corrected_VLSM_output_folder_name, f"Zsurviving_clusters_{variable}.nii"))
              # "C:/Users/u0146803/Documents/VLSM_masterthesis/output/VLSM_correctedMC/Zsurviving_clusters_ANTAT_afgebrokenwoord.nii")
     # nib.save(surviving_clusters_img, 'path/to/save/surviving_clusters.nii') #pas pad aan, doe comment weg
 

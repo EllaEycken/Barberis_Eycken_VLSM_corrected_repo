@@ -124,8 +124,6 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
 
     ## Prepare the data
     # Create a binary mask where values > 0 are 1, and all others are 0 (based on ChatGPT)
-    lesion_data = lesion_data * 1  # bij positieve: *1; bij negatieve: soms doe ik *-1 om voor negatieve --> positieve Z-waarden te gaan omdat het makkelijker werkte met positieve z-waarden
-    lesion_data = lesion_data * 1  # bij positieve: *1; bij negatieve: soms doe ik *-1 om voor negatieve --> positieve Z-waarden te gaan omdat het makkelijker werkte met positieve z-waarden
     data = (lesion_data > 0).astype(
         int)  # Create a binary mask where values >= zthreshold are 1, and all others are 0 (based on ChatGPT)
     # lesion_data[lesion_data > 0] = 1  # would be of risk to overwrite former parts
@@ -175,7 +173,7 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
             "Brain Region Number": list_brain_areas,
             "Brain Region Name":[harvard_brain_area_names[int(i)] for i in list_brain_areas],
             "Cluster Voxels": list_voxels,
-            "Cluster Percentage": list_percentages,
+            "% of Cluster in this region": list_percentages,
         }
 
     # ---- STEP 2: Create Dataframe ----
@@ -187,7 +185,7 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
 
     # ---- STEP 3: save Dataframe as excel in table data directory
     # TODO: pas naam van excel file zelf aan (.xlsx niet vergeten)
-    file_name = os.path.join(tables_DIR, f"df_distribution_cluster_Factor_2_with_background.xlsx")
+    file_name = os.path.join(tables_DIR, f"df_distribution_cluster_{variable}_{table_type}.xlsx")
     # from: f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_4_{name_add}_check.svg")
     df_distribution_cluster.to_excel(file_name, index=False)
         # https://www.geeksforgeeks.org/exporting-a-pandas-dataframe-to-an-excel-file/
@@ -225,7 +223,6 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
 
     ## Prepare the data
     # Create a binary mask where values > 0 are 1, and all others are 0 (based on ChatGPT)
-    lesion_data = lesion_data * 1  # bij positieve: *1; bij negatieve: soms doe ik *-1 om voor negatieve --> positieve Z-waarden te gaan omdat het makkelijker werkte met positieve z-waarden
     lesion_data = (lesion_data > 0).astype(
         int)  # Create a binary mask where values >= zthreshold are 1, and all others are 0 (based on ChatGPT)
     # lesion_data[lesion_data > 0] = 1  # would be of risk to overwrite former parts
@@ -280,7 +277,7 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
         "Brain Region Name": [harvard_brain_area_names[int(i)] for i in list_brain_areas],
         "Total Region Voxels": list_total_voxels_per_region,
         "Lesioned Region Voxels": list_lesioned_voxels_per_region,
-        "Region Percentage": list_percentages,
+        "% of regional overlap with cluster": list_percentages,
     }
 
     # ---- STEP 2: Create Dataframe ----
@@ -290,7 +287,7 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
     df_distribution_atlas.style.background_gradient().set_caption(
         "Brain Area (parts) (Harvard) overlap with cluster")
     # discard those rows of df that have 0% overlap with the cluster
-    df_distribution_atlas = df_distribution_atlas[df_distribution_atlas["Region Percentage"] != 0.0]
+    df_distribution_atlas = df_distribution_atlas[df_distribution_atlas["% of regional overlap with cluster"] != 0.0]
     # discard first row if that row is the background region:
     # if df_distribution_atlas["Brain Region Number"][0] == 0: # number 0 in Harvard atlas = background region
         # df_distribution_atlas = df_distribution_atlas.iloc[1:]
@@ -298,7 +295,7 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
 
     # ---- STEP 3: save Dataframe as excel in table data directory
     # TODO: pas naam van excel file zelf aan (.xlsx niet vergeten)
-    file_name = os.path.join(tables_DIR, "df_distribution_atlas_Factor_2_with background.xlsx")
+    file_name = os.path.join(tables_DIR, f"df_region_overlap_{variable}_{table_type}_with background.xlsx")
     df_distribution_atlas.to_excel(file_name, index=False)
     # https://www.geeksforgeeks.org/exporting-a-pandas-dataframe-to-an-excel-file/
 
@@ -390,16 +387,34 @@ if __name__ == "__main__":
     # Define the file paths for the lesion mask and atlas image
     ## Initialize some variables
     # TODO: Vul dit zelf aan
-    lesion_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_2.nii"
-        # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/sub-01.nii"
-    # Path to lesion_mask (nifti-file), make sure to use / instead of \; and add .nii extension
+    variable = "ANTAT_TTR"
+    cluster_is_significant = True  # switch to false if not sign cluster
+    path_to_VLSM_folder = "C:/Users/u0146803/Documents/VLSM_masterthesis"
+    corrected_VLSM_output_folder_name = "VLSM_ANTAT_perm_1000_lesionregr_MCcorrected"
+    threshold_abs = 1.645
+
+    # Pas dit niet zelf aan
+    if cluster_is_significant:
+        cluster_type = "surviving_clusters"
+        table_type = 'sign'
+    else:
+        cluster_type = "nonsign_cluster"
+        table_type = 'nonsign'
+
+    lesion_img_path = os.path.join(path_to_VLSM_folder, 'output', corrected_VLSM_output_folder_name,
+                                    f"Z{cluster_type}_{variable}.nii")
+    # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_4.nii"
+    # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/sub-01.nii"
+    # Path to cluster img (nifti-file), make sure to use / instead of \; and add .nii extension
+
     atlas_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/helper files/harvard_new.nii"
         # 'D:/PhD Pieter De Clercq/paper4_VLSM_aphasia/harvard_new.nii'  # atlas kan je terugvinden in paper4_VLSM_aphasia
     # Note Pieter: het kan zijn dat je later errors krijgt omdat je dimensies van de atlas niet overeenkomen met je dimensies van je letselmapje.
     # Om dit op te lossen: open een letselmapje in MRIcroGL. Dan Draw --> open VOI. Open als nii. Open die harvard_new.nii zoals op de L-schijf staat
     # Direct erna: draw --> save VOI (opslaan als nifti). harvard_new.nii overwriten. Je doet dus niks, enkel openen en weer opslaan sluiten, maar door te openen bovenop het letselmapje,
     # werk je wel in dezelfde dimensies. Werk dan met die nieuwe harvard_new.nii in dit script. Zie ook de manual van de VLSM op de L-schijf bij punt 6. Troubleshooting.
-    tables_DIR = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/tables"
+    tables_DIR = os.path.join(path_to_VLSM_folder, 'tables')
+        # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/tables"
     # Path to tables
     # distribution_excel = os.path.join(tables_DIR, "df_distribution_atlas_cluster_Factor_3.xlsx")
 
