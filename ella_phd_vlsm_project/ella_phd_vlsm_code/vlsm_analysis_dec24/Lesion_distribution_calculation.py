@@ -337,46 +337,50 @@ def locate_peak_value(lesion_img_path, atlas_img_path
 
 
 
-def make_table_histogram(distribution_excel
+def make_histogram(distribution_excel
                          ):
-
-    # TODO: does not work!
     # Read in excel file
     data = pd.read_excel(distribution_excel)
 
     # Create a pandas DataFrame
     df = pd.DataFrame(data)
+    df = df.drop(index=0).reset_index(drop=True)  # drop the first row
 
-    # Create subplots for the table and bar graphs for each column
-    fig, axes = plt.subplots(1, len(df.columns), figsize=(15, 5))
+    # Set the lists of valus, depending on the column values
+    x_values = df.iloc[:, 1 ]
+    y_values_cluster = df.iloc[:, 2]
+    y_values_atlas = df.iloc[:, 3]
 
-    # Plot the table in the first subplot
-    axes[0].axis('off')  # Turn off axes for the table
-    axes[0].table(cellText=df.values, colLabels=df.columns, loc='center', cellLoc='center')
+    # Set the width of the bars
+    bar_width = 0.35
 
-    # Plot bar graphs for each column in the DataFrame
-    for i, column in enumerate(df.columns):
-        # Skip the first axis since it's reserved for the table
-        if i == 0:
-            continue
+    # Set the x positions for the bars
+    x = range(len(x_values))
 
-        # Plot bar graph for each column (excluding the 'Name' column, which is non-numeric)
-        axes[i].bar(df.index, df[column], color='skyblue', edgecolor='black')
-        axes[i].set_title(f'Bar Graph of {column}')
-        axes[i].set_xlabel('Index (Row)')
-        axes[i].set_ylabel(f'{column} Value')
+    # Create the bar graph
+    plt.bar(x, y_values_cluster,
+            width = bar_width,
+            label = 'Voxel distribution of cluster',
+            align = 'center')
+    plt.bar([i + bar_width for i in x], y_values_atlas,
+            width = bar_width,
+            label = 'Regional overlap with cluster',
+            align = 'center')
 
-        # Add value annotations on top of each bar
-        # for j, value in enumerate(df[column]):
-            # axes[i].text(j, value + 0.5, str(value), ha='center', va='bottom', fontsize=10)
+    # Add labels and title
+    plt.xlabel('Brain region')
+    plt.ylabel('Percentage')
+    plt.title('Bar Graph of Voxel distribution of cluster relating to Factor 3')
+    plt.xticks([i+bar_width /2 for i in x ], x_values, rotation=45)
+    plt.legend()
 
-    # Adjust layout to avoid overlap and make sure the table and bar graphs are clearly visible
-    plt.tight_layout()
+    # Show the plot
+    # plt.tight_layout()
     plt.show()
 
     # Optionally save the figure
     plt.savefig(
-        f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_Factor_3_distribution_table_histogram.svg")
+        f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_Factor_3_distribution_histogram.svg")
     # from plt.savefig(
     #         os.path.join(output_dir, "figures", f"feature_importances_{label}_{interview_part}.png"), dpi = 300)
     plt.show()
@@ -416,9 +420,10 @@ if __name__ == "__main__":
     tables_DIR = os.path.join(path_to_VLSM_folder, 'tables')
         # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/tables"
     # Path to tables
-    # distribution_excel = os.path.join(tables_DIR, "df_distribution_atlas_cluster_Factor_3.xlsx")
+    distribution_excel = os.path.join(path_to_VLSM_folder, "df_distribution_atlas_cluster_Factor_3.xlsx")
 
     # Calculate the cluster distribution
+    """
     calculate_lesion_distribution_cluster_based(
         lesion_img_path,
         atlas_img_path,
@@ -436,6 +441,6 @@ if __name__ == "__main__":
         lesion_img_path,
         atlas_img_path,
     )
-
-    # make_table_histogram(distribution_excel)
+    """
+    make_histogram(distribution_excel)
 
