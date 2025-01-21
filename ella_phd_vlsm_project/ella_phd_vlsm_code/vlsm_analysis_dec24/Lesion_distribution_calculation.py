@@ -347,9 +347,9 @@ def make_histogram(distribution_excel
     df = df.drop(index=0).reset_index(drop=True)  # drop the first row
 
     # Set the lists of valus, depending on the column values
-    x_values = df.iloc[:, 1 ]
-    y_values_cluster = df.iloc[:, 2]
-    y_values_atlas = df.iloc[:, 3]
+    x_values = df.iloc[:, 2 ]
+    y_values_cluster = df.iloc[:, 3]
+    y_values_atlas = df.iloc[:, 4]
 
     # Set the width of the bars
     bar_width = 0.35
@@ -368,19 +368,19 @@ def make_histogram(distribution_excel
             align = 'center')
 
     # Add labels and title
-    plt.xlabel('Brain region')
+    # plt.xlabel('Brain region')
     plt.ylabel('Percentage')
     plt.title('Bar Graph of Voxel distribution of cluster relating to Factor 3')
-    plt.xticks([i+bar_width /2 for i in x ], x_values, rotation=45)
+    plt.xticks(
+        ticks = [i+bar_width/2 for i in x],
+        labels = x_values,
+        rotation=45)
     plt.legend()
 
-    # Show the plot
-    # plt.tight_layout()
-    plt.show()
 
     # Optionally save the figure
     plt.savefig(
-        f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_Factor_3_distribution_histogram.svg")
+        f"C:/Users/u0146803/Documents/VLSM_regions/VLSM_Factor_3_distribution_histogram.svg")
     # from plt.savefig(
     #         os.path.join(output_dir, "figures", f"feature_importances_{label}_{interview_part}.png"), dpi = 300)
     plt.show()
@@ -393,7 +393,8 @@ if __name__ == "__main__":
     # TODO: Vul dit zelf aan
     variable = "ANTAT_TTR"
     cluster_is_significant = True  # switch to false if not sign cluster
-    path_to_VLSM_folder = "C:/Users/u0146803/Documents/VLSM_masterthesis"
+    # path_to_VLSM_folder = "C:/Users/u0146803/Documents/VLSM_masterthesis"
+    path_to_VLSM_folder = "C:/Users/u0146803/Documents/VLSM_regions"
     corrected_VLSM_output_folder_name = "VLSM_ANTAT_perm_1000_lesionregr_MCcorrected"
     threshold_abs = 1.645
 
@@ -420,7 +421,7 @@ if __name__ == "__main__":
     tables_DIR = os.path.join(path_to_VLSM_folder, 'tables')
         # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/tables"
     # Path to tables
-    distribution_excel = os.path.join(path_to_VLSM_folder, "df_distribution_atlas_cluster_Factor_3.xlsx")
+    distribution_excel = os.path.join(path_to_VLSM_folder, 'df_distribution_short_Factor_3.xlsx')
 
     # Calculate the cluster distribution
     """
