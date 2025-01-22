@@ -379,9 +379,9 @@ def make_histogram(distribution_excel
 
     # Add values above bars
     for index, value in enumerate(y_values_cluster):
-        plt.text(index, value + 0.5, str(round(value)), ha='center', va='bottom', size = 'x-small')
+        plt.text(index, value + 0.5, str(round(value, 1)), ha='center', va='bottom', size = 'xx-small')
     for index, value in enumerate(y_values_atlas):
-        plt.text(index + bar_width, value + 0.5, str(round(value)), ha='center', va='bottom', size = 'x-small')
+        plt.text(index + bar_width, value + 0.5, str(round(value, 1)), ha='center', va='bottom', size = 'xx-small')
 
     # Position the legend on the right side
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1), fontsize = 'small')
@@ -389,7 +389,7 @@ def make_histogram(distribution_excel
 
     # Optionally save the figure
     plt.savefig(
-        f"C:/Users/u0146803/Documents/VLSM_regions/VLSM_Factor_3_distribution_histogram_2.png", dpi = 1200)
+        f"C:/Users/u0146803/Documents/VLSM_regions/VLSM_Factor_3_distribution_histogram_5.png", dpi = 1200)
     # from plt.savefig(
     #         os.path.join(output_dir, "figures", f"feature_importances_{label}_{interview_part}.png"), dpi = 300)
     plt.show()
