@@ -360,17 +360,17 @@ def make_histogram(distribution_excel
     # Create the bar graph
     plt.bar(x, y_values_cluster,
             width = bar_width,
-            label = 'Voxel distribution of cluster',
+            label = '% of cluster overlapping with the region',
             align = 'center')
     plt.bar([i + bar_width for i in x], y_values_atlas,
             width = bar_width,
-            label = 'Regional overlap with cluster',
+            label = '% of region overlapping with the cluster',
             align = 'center')
 
     # Add labels and title
     plt.xlabel('Brain region')
     plt.ylabel('Percentage')
-    plt.title('Voxel distribution and regional overlap of the lexical-semantic cluster')
+    plt.title('Overlap between the lexical-semantic cluster and brain regions')
     plt.xticks(
         ticks = [i+bar_width/2 for i in x],
         labels = x_values,
@@ -384,12 +384,12 @@ def make_histogram(distribution_excel
         plt.text(index + bar_width, value + 0.5, str(round(value, 1)), ha='center', va='bottom', size = 'xx-small')
 
     # Position the legend on the right side
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1), fontsize = 'small')
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1), fontsize = 'x-small')
     plt.tight_layout()
 
     # Optionally save the figure
     plt.savefig(
-        f"C:/Users/u0146803/Documents/VLSM_regions/VLSM_Factor_3_distribution_histogram_5.png", dpi = 1200)
+        f"C:/Users/u0146803/Documents/VLSM_regions/VLSM_Factor_3_distribution_histogram_6.png", dpi = 1200)
     # from plt.savefig(
     #         os.path.join(output_dir, "figures", f"feature_importances_{label}_{interview_part}.png"), dpi = 300)
     plt.show()
