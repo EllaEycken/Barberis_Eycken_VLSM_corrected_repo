@@ -344,7 +344,7 @@ def make_histogram(distribution_excel
 
     # Create a pandas DataFrame
     df = pd.DataFrame(data)
-    df = df.drop(index=0).reset_index(drop=True)  # drop the first row
+    # df = df.drop(index=0).reset_index(drop=True)  # drop the first row
 
     # Set the lists of valus, depending on the column values
     x_values = df.iloc[:, 2 ]
@@ -389,7 +389,7 @@ def make_histogram(distribution_excel
 
     # Optionally save the figure
     plt.savefig(
-        f"C:/Users/u0146803/Documents/VLSM_regions/VLSM_Factor_3_distribution_histogram_6.png", dpi = 1200)
+        f"C:/Users/u0146803/Documents/VLSM_regions/VLSM_Factor_3_distribution_histogram_7.png", dpi = 1200)
     # from plt.savefig(
     #         os.path.join(output_dir, "figures", f"feature_importances_{label}_{interview_part}.png"), dpi = 300)
     plt.show()
