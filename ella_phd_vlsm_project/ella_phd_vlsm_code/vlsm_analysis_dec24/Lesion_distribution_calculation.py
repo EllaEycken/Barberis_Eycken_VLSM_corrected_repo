@@ -123,9 +123,9 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
         atlas_img_path).get_fdata()
 
     ## Prepare the data
-    # Create a binary mask where values > 0 are 1, and all others are 0 (based on ChatGPT)
+    # Create a binary mask where values > 0 are 1, and all others are 0
     data = (lesion_data > 0).astype(
-        int)  # Create a binary mask where values >= zthreshold are 1, and all others are 0 (based on ChatGPT)
+        int)  # Create a binary mask where values >= zthreshold are 1, and all others are 0
     # lesion_data[lesion_data > 0] = 1  # would be of risk to overwrite former parts
     # how is the above done:
     # 1) It creates a boolean array where values greater than zthreshold are True and everything else is False.
@@ -194,7 +194,7 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
 
 
 
-### CHAT GPT PART: hoeveel % van die hersenregio (in atlas) is ingenomen door cluster
+### OWN PART: hoeveel % van die hersenregio (in atlas) is ingenomen door cluster
 # -------------------------------------------------------------------------
 def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, tables_DIR,
 
@@ -431,6 +431,7 @@ if __name__ == "__main__":
         # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/tables"
     # Path to tables
     distribution_excel = os.path.join(path_to_VLSM_folder, 'df_distribution_short_Factor_3.xlsx')
+
 
     # Calculate the cluster distribution
     """
