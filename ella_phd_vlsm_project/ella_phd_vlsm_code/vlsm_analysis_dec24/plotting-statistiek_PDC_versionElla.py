@@ -45,15 +45,22 @@ from bisect import bisect_left
 
 ## Specifieer volgende variabelen telkens (bij elke run) ZELF
 # TODO: specifieer dit allemaal ZELF (tem 'focus_on_positive_zvalues'
-variable = "ANTAT_speechrate"
-path_to_VLSM_folder = "C:/Users/u0146803/Documents/VLSM_masterthesis"
-uncorrected_VLSM_output_folder_name= "VLSM_ANTAT_perm_1000_lesionregr_23Dec2024_224000"  # this is the output file of NiiStat (with no corrections for multiple comparisons)
-uncorrected_z_map = '_'.join(uncorrected_VLSM_output_folder_name.split("_")[:5])  # should be: VLSM_ANTAT_perm_1000_lesionregr
-corrected_VLSM_output_folder_name = "VLSM_ANTAT_perm_1000_lesionregr_MCcorrected"  # this WILL be the output file of the Multiple Comparisons correction performed in this script
+variable = 'Factor_1'
+    # = "ANTAT_speechrate"
+path_to_VLSM_folder = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA"
+    # = "C:/Users/u0146803/Documents/VLSM_masterthesis"
+uncorrected_VLSM_output_folder_name = "VLSM_factored_withMonthsPO_perm_5000_lesionregr_10Dec2024_094405"
+    # = "VLSM_ANTAT_perm_1000_lesionregr_23Dec2024_224000"  # this is the output file of NiiStat (with no corrections for multiple comparisons)
+uncorrected_z_map = '_'.join(uncorrected_VLSM_output_folder_name.split("_")[:6])
+    # '_'.join(uncorrected_VLSM_output_folder_name.split("_")[:5])
+# should be: VLSM_factored_withMonthsPO_perm_5000_lesionregr
+# should be: VLSM_ANTAT_perm_1000_lesionregr
+corrected_VLSM_output_folder_name = "VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected"
+    # "VLSM_ANTAT_perm_1000_lesionregr_MCcorrected"  # this WILL be the output file of the Multiple Comparisons correction performed in this script
 uncorrected_pthreshold = 0.05
 corrected_pthreshold = 0.05
-nb_of_permutations = 1000
-focus_on_positive_zvalues = False  # noteer False indien focus op NEGATIEVE z-waarden
+nb_of_permutations = 5000
+focus_on_positive_zvalues = True  # noteer False indien focus op NEGATIEVE z-waarden
 
 
 ## Andere variabelen die geïnitialiseerd worden (NIET aan te passen):
@@ -126,7 +133,7 @@ def take_closest(myList, myNumber):
 
 # dit doe ik nu bij data van mijn VLSM paper. Die data staan onder "paper4_VLSM_aphasia", bij output --> permTest
 # toevoeging door Ella: door dit voor IEDERE variable of interest!
-# TODO: PAD zelf aanpassen
+# TODO: PAD zelf aanpassen (alleen indien echt nodig, normaal wordt dit automatisch gedaan volgens volgend stramien: /pad VLSM + output/permTest + variable/
 variable_perm_path = os.path.join(path_to_VLSM_folder, 'output/permTest',f"{variable}/")
     # ("C:/Users/u0146803/Documents/VLSM_masterthesis/output/permTest/ANTAT_afgebrokenwoord/")
     #"E:/vlsm_scratch/output/permTest/broad40_all/"  # lokaal laten lopen, pas het pad zelf aan
@@ -141,7 +148,6 @@ for file in allPerms:
     img = nib.load((variable_perm_path + file))
     img_data = img.get_fdata()
 
-    # TODO: focus op pos or neg z-values
     if focus_on_positive_zvalues: # zet zthreshold, behoud alleen die img_data > treshold (of bij neg z-waarden: die x <- treshold)
         thresholded_img_data = img_data > uncorrected_zthreshold
     else:
@@ -158,13 +164,12 @@ for file in allPerms:
 # nu heb je alle cluster sizes berekend. Afgaand op je corrected threshold voor cluster size die je kiest (=/= uncorrected treshold van hierboven!), neem je nu de N-grootste size.
 # bijvoorbeeld, bij corrected cluster treshold p=.05 en 1000 permutaties, is dat N=50
 # Aanvulling Ella: Stark: bij p=.01 als cluster treshold en 5000 permutaties, is dat N=50 (note: zij gebruikt N=100, terwijl wel p .01 en 5000 perm?)
-# Aanvulling Ella: p 0.01 te strikt, toch p 0.05 als cluster threshold gekozen, is dan N=250
+# Aanvulling Ella VLSM IANSA: p 0.01 te strikt, toch p 0.05 als cluster threshold gekozen, is dan N=250
 # Aanvulling Ella masterthesis: 1000 perm, p 0.05 => 50e cluster
 # dat is je correctie voor multiple comparisons via cluster sizes
 ranked_values = np.sort(size)[::-1]  # rank ze (-1 statement staat voor descending order (van groot nr klein))
-# TODO: Pas ranked_values[X] aan indien je voor een ander aantal permutaties hebt gekozen EN indien andere corrected p-treshold
 #  (Pieter: 1000 permutaties => corrected p treshold p=0.05 komt overeen met N=50 dus 50e cluster size kiezen als cluster_treshold)
-index_perm_cluster_threshold= int((corrected_pthreshold * nb_of_permutations)-1) # neem de 50ste (start te tellen vanaf 0 dus daarom 49)
+index_perm_cluster_threshold= int((corrected_pthreshold * nb_of_permutations)-1) # neemt de 50ste (start te tellen vanaf 0 dus daarom 49)
 cluster_threshold = ranked_values[index_perm_cluster_threshold]
 # cluster_threshold = ranked_values[49]  # neem de 50ste (start te tellen vanaf 0 dus daarom 49)
 
@@ -202,20 +207,19 @@ print("Number of clusters that survived cluster threshold: {0}".format(len(survi
 
 ## -- STEP 7: PLOTTEN
 # --------------------
-# plotten. Als er niks overleeft, dan plot ik niks. # NOTE aanvulling Ella: plot grootste cluster
+# plotten. Als er niks overleeft, dan plot ik de grootste cluster (= aanpassing dr Ella)
 if len(surviving_clusters) == 0:
     # calculate largest cluster size and check its corresponding corrected p-value
     largest_cluster_size = np.max(cluster_sizes)
     closest_perm_cluster = take_closest(myList= ranked_values[::-1], myNumber= largest_cluster_size)
     if len(closest_perm_cluster) > 2:  # als er 4 elementen in lijst zitten aka als je 2 sizes (en hun posities) hebt die het dichtst bij jouw grootste cluster liggen
         corresponding_perm_cluster_size = closest_perm_cluster[:1]
-        # todo: pas 1000 indien nodig aan naar andere totaal aantal permutaties
-        corresponding_p_value = [1-(closest_perm_cluster[3]/nb_of_permutations), 1-(closest_perm_cluster[2]/nb_of_permutations)]  # 1 - X omdat X = xe 'kleinste' cluster, en wij willen y'de grootste cluster want dat is p
+        corresponding_p_value = [1-(closest_perm_cluster[3]/nb_of_permutations), 1-(closest_perm_cluster[2]/nb_of_permutations)]
+        # 1 - X omdat X = xe 'kleinste' cluster, en wij willen y'de grootste cluster want dat is p
         print("permutation cluster sizes around your largest cluster : {0}".format(corresponding_perm_cluster_size))
         print("p-values around your largest cluster : {0}".format(corresponding_p_value))
     else:  # 1 cluster die dichtst bij jouw grootste cluster ligt
         corresponding_perm_cluster_size = closest_perm_cluster[0]
-        # todo: pas 1000 indien nodig aan naar andere totaal aantal permutaties
         corresponding_p_value = 1-(closest_perm_cluster[1]/nb_of_permutations)
         print("permutation cluster size closest to your largest cluster : {0}".format(corresponding_perm_cluster_size))
         print("p-value closest to your largest cluster : {0}".format(corresponding_p_value))
@@ -226,7 +230,7 @@ if len(surviving_clusters) == 0:
     # largest_cluster = np.where(np.max(cluster_sizes))[0]  # should return index of the largest cluster
     largest_cluster_mask = np.isin(labeled_clusters, largest_cluster)
     largest_cluster_data = img_data * largest_cluster_mask
-    # TODO: Pas dit zelf aan afhankelijk van interesse in POSITIEVE (* 1; of volgende lijn outcommenten want geen effect) of NEGATIEVE (* -1) z-waarden
+
     if focus_on_positive_zvalues:
         largest_cluster_data = largest_cluster_data * 1 # die 1 (positieve) of -1 (negatieve) hangt af of je geïnteresseerd bent in negatieve of positieve Z-waarden. Speel hiermee tot je zelf hebt wat je wil
     else:
@@ -272,7 +276,6 @@ else:  # indien er wel iets overleeft, loop ik over alle clusters die cluster th
     ## Hier, uit de for-loop, herhaal ik de code, maar plot ik alle clusters samen in 1 plot.
     surviving_clusters_mask = np.isin(labeled_clusters, surviving_clusters)
     surviving_clusters_data = img_data * surviving_clusters_mask
-    # TODO: Pas dit zelf aan afhankelijk van interesse in POSITIEVE (* 1; of volgende lijn outcommenten want geen effect) of NEGATIEVE (* -1) z-waarden
     if focus_on_positive_zvalues:
         surviving_clusters_data = surviving_clusters_data * 1  # die 1 (positieve) of -1 (negatieve) hangt af of je geïnteresseerd bent in negatieve of positieve Z-waarden. Speel hiermee tot je zelf hebt wat je wil
     else:

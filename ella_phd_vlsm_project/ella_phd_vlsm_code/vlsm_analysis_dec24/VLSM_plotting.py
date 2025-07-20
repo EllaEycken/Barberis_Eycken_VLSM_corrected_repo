@@ -213,7 +213,7 @@ def plot_VLSM_cluster(cluster_img_path,
 
 
 if __name__ == "__main__":
-    # Define the file paths for the lesion mask and atlas image
+    """ VLSM MASTERTHESIS PROJECT """
     ## Initialize some variables
     # TODO: Vul dit zelf aan
     variable = "ANTAT_TTR"
@@ -267,3 +267,56 @@ if __name__ == "__main__":
     # plot_VLSM_cluster(cluster_img_path)
 
 
+
+    """ VLSM IANSA PROJECT """
+    ## Initialize some variables
+    # TODO: Vul dit zelf aan
+    variable = ""
+    variable_type = "Lexical"  # choices: see below
+    cluster_is_significant = True  # switch to false if not sign cluster
+    path_to_VLSM_folder = "C:/Users/u0146803/Documents/VLSM_masterthesis"
+    corrected_VLSM_output_folder_name = "VLSM_ANTAT_perm_1000_lesionregr_MCcorrected"
+    threshold_abs = 1.645
+
+    # Pas dit niet zelf aan
+    if cluster_is_significant:
+        cluster_type = "surviving_clusters"
+        plot_type = 'sign'
+    else:
+        cluster_type = "nonsign_cluster"
+        plot_type = 'nonsign'
+
+    if variable_type == "Semantics":
+        colour = 'Oranges'
+    elif variable_type == "Phonology":
+        colour = 'Blues'
+    elif variable_type == "Lexical":
+        colour = "Greens"
+    elif variable_type == "Grammatical":
+        colour = "Reds"
+    elif variable_type == "Macrostructure":
+        colour = "Purples"
+    elif variable_type == "Fluency":
+        colour = "YlOrBr"  # yellows doesn't exist
+    # source: https://matplotlib.org/stable/users/explain/colors/colormaps.html
+
+    cluster_img_path = os.path.join(path_to_VLSM_folder, 'output', corrected_VLSM_output_folder_name,
+                                    f"Z{cluster_type}_{variable}.nii")
+    # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_4.nii"
+    # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/sub-01.nii"
+    # Path to cluster img (nifti-file), make sure to use / instead of \; and add .nii extension
+    save_plot_path = os.path.join(path_to_VLSM_folder, 'figures')
+
+    # Get the voxel counts
+    check_VLSM_output_by_threshold(cluster_img_path, threshold_abs)
+
+    # Output the result
+    """print(f"Number of voxels above the threshold: {above}")
+    print(f"Number of voxels below the threshold: {below}")
+    print(f"Minimum value of voxels below the threshold: {min_below}")
+    print(f"Maximum value of voxels below the threshold: {max_below}")
+    print(f"Number of voxels above zero: {above_zero}")"""
+
+    plot_VLSM_cluster_new(cluster_img_path, threshold_abs)
+    plot_VLSM_cluster_axial(cluster_img_path, threshold_abs)
+    # plot_VLSM_cluster(cluster_img_path)

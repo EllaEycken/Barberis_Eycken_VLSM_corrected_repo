@@ -11,7 +11,7 @@
 # output: a list of brain areas, the amount of lesioned voxels in those brain areas, and the relative percentage of that
 # brain area that is lesioned (relative percentage of lesioned voxels in those brain areas).
 # note: sum will NOT add to 100% (nl per brain area, X% of that brain area is occupied by the cluster; then for next area etc)
-# Source: MRIcroGL, support by ChatGPT
+# Source: MRIcroGL
 
 
 ## Imports
@@ -92,15 +92,9 @@ harvard_brain_area_names = [ # source: https://scalablebrainatlas.incf.org/servi
 ]
 
 
-### PIETER PART: hoeveel % van cluster ligt in bepaalde hersenregio
+### PDC PART: how much % of the cluster is in a specific brain region?
 # ------------------------------------------------------------------
-# Source: L-drive --> Brain and Language --> Datamanagement --> PhD Pieter De Clercq --> voorbeeldscripts_info --> VLSM --> Plotting-statistiek onderste lijnen
-# als je ooit zou willen kijken tot welke hersengebieden die cluster behoort, dan kun je die code toepassen. (zie mijn paper tabel met percentages)
-# Hier gebruik ik de harvard-oxford atlas en overlap ik die met de cluster size. Je kan die atlas terugvinden in paper4_VLSM_aphasia
-# output = percentage van die cluster dat in een bepaald hersengebied ligt.
-# zoek dan op in die atlas (bvb in MRIcroGL) tot welke hersengebieden die waardes behoren.
-
-# als je dit per cluster wil weten, dan is dat een leuk projectje voor jezelf om eens uit te proberen, gebruik hiervoor code hierboven als startpunt; maak een for-loop over alle individuele clusters heen.
+# Source: L-drive --> Brain and Language --> Datamanagement --> PhD PDC --> voorbeeldscripts_info --> VLSM --> Plotting-statistiek onderste lijnen
 
 def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path, tables_DIR, variable, table_type
 
@@ -133,44 +127,47 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
     # how is the above done:
     # 1) It creates a boolean array where values greater than zthreshold are True and everything else is False.
     # 2) Then, .astype(int) converts the boolean array to integers, where True becomes 1 and False becomes 0.
-    # Why: Z-waarden binary maken (niet meer geïnteresseerd in Z-waarden van de cluster, wel in welk hersengebied de cluster (= alles met z-waarde > 0) ligt
-    # dus alleen interesse in OF een voxel behoort tot cluster (dan nl Z-waarde > 0 (behouden: maak van z-waarde een 1)) of niet (niet behouden: z-waarde blijft 0)
+    # Why: Making Z-values binary (we're not interested in Z-values of the cluster, we are interested in which region
+    # the non-zero voxels of the cluster are situated in (= all with z-value > 0)
+    # So: only interest in WHETHER a voxel belongs to a cluster: then z-value > 0 => keep it and turn to 1.
+    # If z-value = 0, don't keep it (= let it be 0).
 
     # compute the total amount of voxels (to later calculate percentages)
     total_voxels = np.sum(data)
     print('total voxels', total_voxels)
 
-    ## Bereken percentages
+    ## Compute percentages
     data[data > 0] = atlas[data > 0]
-    # plaats de waarden van atlas (aka voxels die behoren tot bepaalde hersengebieden (gebied 1, gebied 2...): 1 1 1 1 2 2 2 2 ...) in de plaats van de clusterwaarden (aka de data waarden die groter zijn dan 0 aka 1)
-    # zodat 'data' nu een representatie is van alleen die hersengebied-waarden (111112222888555) die behoren tot de cluster, rest van data is 0
+    # place the values of atlas (aka voxels belonging to certain brain regions (area 1, area 2...): 1 1 1 1 2 2 2 2 ...)
+    # in the place of the cluster values (aka the data values greater than 0 aka 1)
+    # so that ‘data’ is now a representation of only those brain area values (111112222888555)
+    # that belong to the cluster, rest of data is 0
     uniques = np.unique(data)
-    # obv de data (eigenlijk nu die hersengebieden die behoren tot de cluster), maak een lijst van de VERSCHILLENDE hersenregio's die in de cluster liggen
-    # door uniques te nemen: (111112222888555) als data, dan is hersengebied 1, 2, 8 en 5 in de cluster vallen
+    # based on the data (actually now those brain regions that belong to the cluster),
+    # make a list of the DIFFERENT brain regions that are in the cluster
+    # by taking uniques: (111112222888555) as data, then brain regions 1, 2, 8 and 5 fall into the cluster
     uniques = uniques[1:]
-    # note dat uniques ook de waarde 0 uit de data extraheert terwijl 0 niet overeenstemt met een hersengebied, dus haal 0 uit uniques (pas tellen vanaf 1)
+    # note that uniques also extracts the value 0 from the data while 0 does not correspond to a brain region,
+    # so extract 0 from uniques (only counting from 1)
     list_voxels = []
     list_percentages = []
     list_brain_areas = []
 
-    for i in uniques: # ga over de verschillende hersengebieden die in de cluster vallen
+    for i in uniques: # go over the different brain regions within the cluster
         newData = data[data == i]
-        # uit de data (die hersengebieden die behoren tot de cluster), sla alle waarden gelijk aan i (aka voxels die tot bepaald hersengebied i behoren) op in newData
-        # zodat newData = lijst van alle voxels uit de cluster die tot dat hersengebied behoren
+        # from the data (those brain areas that belong to the cluster), store all values equal to i
+        # (aka voxels that belong to certain brain area i) in newData
+        # so that newData = list of all voxels from the cluster that belong to that brain area
         newData[newData > 0] = 1
-        # zet alle waarden in newData (iiiiii, met i = 1...laatste hersengebied) om in de waarde 1 (11111)
+        # convert all values in newData (iiiiii, with i = 1...last brain area) to the value 1 (11111)
         percentage_i = (np.sum(newData) / total_voxels) * 100
-        # percentage: som van alle voxels uit dat hersengebied die in de cluster liggen / totaal aantal voxels in de cluster
+        # percentage: sum of all voxels from that brain region lying in the cluster / total number of voxels in the cluster
         list_percentages.append(percentage_i)
         list_voxels.append(np.sum(newData))
         list_brain_areas.append(i)
 
-        # print("Hersengebied: {0}".format(
-            # i))  # dit is hersengebied index van die atlas. Laad die atlas eens in in mricrogl en zoek uit welke index tot welk hersengebied behoort.
-        # print("Percentage: {0}%".format(percentage_i)  # percentage
 
-
-    ## Sla resultaten op in dataframe
+    ## Save results in dataframe
     # ---- STEP 1: initialize data dictionary of lists ----
     data_distribution_cluster = {
             "Brain Region Number": list_brain_areas,
@@ -187,7 +184,7 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
 
 
     # ---- STEP 3: save Dataframe as excel in table data directory
-    # TODO: pas naam van excel file zelf aan (.xlsx niet vergeten)
+    # TODO: adapt name of excel file (don't forget .xlsx)
     file_name = os.path.join(tables_DIR, f"df_distribution_cluster_{variable}_{table_type}.xlsx")
     # from: f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_4_{name_add}_check.svg")
     df_distribution_cluster.to_excel(file_name, index=False)
@@ -197,7 +194,7 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
 
 
 
-### OWN PART: hoeveel % van die hersenregio (in atlas) is ingenomen door cluster
+### NEW PART: how muc % of that brain region (in the atlas) is occupied by the cluster?
 # -------------------------------------------------------------------------
 def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, tables_DIR, variable, table_type
                                               ):
@@ -226,23 +223,21 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
 
 
     ## Prepare the data
-    # Create a binary mask where values > 0 are 1, and all others are 0 (based on ChatGPT)
+    # Create a binary mask where values > 0 are 1, and all others are 0
     lesion_data = (lesion_data > 0).astype(
-        int)  # Create a binary mask where values >= zthreshold are 1, and all others are 0 (based on ChatGPT)
+        int)  # Create a binary mask where values >= zthreshold are 1, and all others are 0
     # lesion_data[lesion_data > 0] = 1  # would be of risk to overwrite former parts
     # how is the above done:
     # 1) It creates a boolean array where values greater than zthreshold are True and everything else is False.
     # 2) Then, .astype(int) converts the boolean array to integers, where True becomes 1 and False becomes 0.
-    # Why: Z-waarden binary maken (niet meer geïnteresseerd in Z-waarden van de cluster, wel in welk hersengebied de cluster (= alles met z-waarde > 0) ligt
-    # dus alleen interesse in OF een voxel behoort tot cluster (dan nl Z-waarde > 0 (behouden: maak van z-waarde een 1)) of niet (niet behouden: z-waarde blijft 0)
-    print('data')
-    # get the atlas data
-
+    # Why: Why: Making Z-values binary (we're not interested in Z-values of the cluster, we are interested in which region
+    # the non-zero voxels of the cluster are situated in (= all with z-value > 0)
+    # So: only interest in WHETHER a voxel belongs to a cluster: then z-value > 0 => keep it and turn to 1.
+    # If z-value = 0, don't keep it (= let it be 0).
 
     ## Calculate percentages
     # Get unique region labels from the atlas (Ella: not (excluding 0, which usually represents background))
     list_brain_areas = np.unique(atlas_data)
-    #region_labels = region_labels[region_labels != 0]
 
     # Initialize a dictionary to store results
     lesion_distribution = {}
@@ -298,7 +293,7 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
         # df_distribution_atlas.reset_index(drop = True, inplace = True)
 
     # ---- STEP 3: save Dataframe as excel in table data directory
-    # TODO: pas naam van excel file zelf aan (.xlsx niet vergeten)
+    # TODO: adapt name of excel file (don't forget .xlsx)
     file_name = os.path.join(tables_DIR, f"df_region_overlap_{variable}_{table_type}_with background.xlsx")
     df_distribution_atlas.to_excel(file_name, index=False)
     # https://www.geeksforgeeks.org/exporting-a-pandas-dataframe-to-an-excel-file/
@@ -325,7 +320,6 @@ def locate_peak_value(lesion_img_path, atlas_img_path
     # multi-dimensional coordinates (x, y, z) with np.unravel_index().
     # Using the coordinates obtained from np.unravel_index, you can access the corresponding voxel in the atlas_data
     # and get the region index for that voxel.
-    # source: chatgpt
 
     # Get the region index from the Harvard Oxford Atlas at that voxel
     region_index = atlas_data[highest_value_index]
@@ -402,10 +396,11 @@ def make_histogram(distribution_excel
 
 
 if __name__ == "__main__":
+
     """ FOR VLSM OUTPUT CLUSTERS """
     # Define the file paths for the lesion mask and atlas image
     ## Initialize some variables
-    # TODO: Vul dit zelf aan
+    # TODO: Fill this out yourself
     variable = "ANTAT_TTR"
     cluster_is_significant = True  # switch to false if not sign cluster
     # path_to_VLSM_folder = "C:/Users/u0146803/Documents/VLSM_masterthesis"
@@ -413,7 +408,7 @@ if __name__ == "__main__":
     corrected_VLSM_output_folder_name = "VLSM_ANTAT_perm_1000_lesionregr_MCcorrected"
     threshold_abs = 1.645
 
-    # Pas dit niet zelf aan
+    # DO NOT CHANGE THIS
     if cluster_is_significant:
         cluster_type = "surviving_clusters"
         table_type = 'sign'
@@ -421,6 +416,8 @@ if __name__ == "__main__":
         cluster_type = "nonsign_cluster"
         table_type = 'nonsign'
 
+
+    # TODO: change this yourself
     lesion_img_path = os.path.join(path_to_VLSM_folder, 'output', corrected_VLSM_output_folder_name,
                                     f"Z{cluster_type}_{variable}.nii")
     # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_4.nii"
@@ -428,11 +425,11 @@ if __name__ == "__main__":
     # Path to cluster img (nifti-file), make sure to use / instead of \; and add .nii extension
 
     atlas_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/helper files/harvard_new.nii"
-        # 'D:/PhD Pieter De Clercq/paper4_VLSM_aphasia/harvard_new.nii'  # atlas kan je terugvinden in paper4_VLSM_aphasia
-    # Note Pieter: het kan zijn dat je later errors krijgt omdat je dimensies van de atlas niet overeenkomen met je dimensies van je letselmapje.
-    # Om dit op te lossen: open een letselmapje in MRIcroGL. Dan Draw --> open VOI. Open als nii. Open die harvard_new.nii zoals op de L-schijf staat
-    # Direct erna: draw --> save VOI (opslaan als nifti). harvard_new.nii overwriten. Je doet dus niks, enkel openen en weer opslaan sluiten, maar door te openen bovenop het letselmapje,
-    # werk je wel in dezelfde dimensies. Werk dan met die nieuwe harvard_new.nii in dit script. Zie ook de manual van de VLSM op de L-schijf bij punt 6. Troubleshooting.
+        # 'D:/PhD PDC/paper4_VLSM_aphasia/harvard_new.nii'  # atlas can be found in paper4_VLSM_aphasia
+    # Note PDC: you may get errors later because your dimensions of the atlas do not match your dimensions of your lesion folder.
+    # To solve this: open a lesion folder in MRIcroGL. Then Draw --> open VOI. Open as nii. Open that harvard_new.nii as on the L disk.
+    # Right after: draw --> save VOI (save as nifti). overwrite harvard_new.nii. So you don't do anything, just open and close save again, but by opening on top of the injury folder,
+    # you're working in the same dimensions. Then work with that new harvard_new.nii in this script. See also the manual of the VLSM on the L disk at point 6. Troubleshooting.
     tables_DIR = os.path.join(path_to_VLSM_folder, 'tables')
         # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/tables"
     # Path to tables
@@ -440,7 +437,7 @@ if __name__ == "__main__":
 
 
     # Calculate the cluster distribution
-    """
+
     calculate_lesion_distribution_cluster_based(
         lesion_img_path,
         atlas_img_path,
@@ -460,9 +457,10 @@ if __name__ == "__main__":
     )
     
     make_histogram(distribution_excel)
-    """
 
-    """ FOR LESION OVERLAP CLUSTER """
+
+
+    """FOR LESION OVERLAP CLUSTER """
     # unthresh_lesionOverlapMask_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_Mask.nii"
     thresh_lesionOverlapMask_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/thresh_lesionOverlap_Mask.nii"
 
@@ -479,7 +477,7 @@ if __name__ == "__main__":
     tables_IANSA_DIR = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/tables"
     variable_lesionOverlap = "lesion_overlap"  # name of the variable in the table
     table_type_lesionOverlap = 'threshold_5'
-    """
+
     calculate_lesion_distribution_cluster_based(
         resampled_thresh_lesionOverlapMask_path,
         atlas_img_path,
@@ -487,7 +485,6 @@ if __name__ == "__main__":
         variable_lesionOverlap,
         table_type_lesionOverlap
     )
-    """
 
     calculate_lesion_distribution_atlas_based(
         resampled_thresh_lesionOverlapMask_path,
