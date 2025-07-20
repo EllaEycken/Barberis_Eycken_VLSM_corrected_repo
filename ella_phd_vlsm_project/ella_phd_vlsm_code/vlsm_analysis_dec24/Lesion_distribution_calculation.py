@@ -463,25 +463,33 @@ if __name__ == "__main__":
     """
 
     """ FOR LESION OVERLAP CLUSTER """
-    # cluster_mask = "L:/GBW-0128_Brain_and_Language/Aphasia\/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_10Dec2024_094405/ZVLSM_factored_withMonthsPO_perm_5000_lesionregrFactor_1.nii"
     # unthresh_lesionOverlapMask_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_Mask.nii"
     thresh_lesionOverlapMask_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/thresh_lesionOverlap_Mask.nii"
+
     # Load images
     lesion_img = nib.load(thresh_lesionOverlapMask_path)  # your lesion overlap image
     atlas_img = nib.load(
         "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/helper files/harvard_new.nii")
+
     # Resample lesion image to atlas resolution and space
     lesion_resampled = ni.resample_to_img(lesion_img, atlas_img, interpolation='nearest')
     resampled_thresh_lesionOverlapMask_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/resampled_thresh_lesionOverlap_Mask.nii"
     nib.save(lesion_resampled, resampled_thresh_lesionOverlapMask_path)
 
-    # atlas_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/helper files/harvard_new.nii"
     tables_IANSA_DIR = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/tables"
-    # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/tables"
     variable_lesionOverlap = "lesion_overlap"  # name of the variable in the table
     table_type_lesionOverlap = 'threshold_5'
-
+    """
     calculate_lesion_distribution_cluster_based(
+        resampled_thresh_lesionOverlapMask_path,
+        atlas_img_path,
+        tables_IANSA_DIR,
+        variable_lesionOverlap,
+        table_type_lesionOverlap
+    )
+    """
+
+    calculate_lesion_distribution_atlas_based(
         resampled_thresh_lesionOverlapMask_path,
         atlas_img_path,
         tables_IANSA_DIR,

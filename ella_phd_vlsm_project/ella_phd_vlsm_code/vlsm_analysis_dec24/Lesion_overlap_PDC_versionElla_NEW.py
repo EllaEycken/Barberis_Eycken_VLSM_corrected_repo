@@ -66,6 +66,19 @@ def threshold_lesionOverlapMask(overlap_mask_path, out_path, threshold):
     :param out_path: Output path for thresholded lesion overlap mask (.nii file)
     :param threshold: Minimum number of overlapping lesions to retain a voxel (e.g., 5)
     :return: the path to the thresholded lesion overlap mask (Nifti1Image object)
+
+    Note: this lesion overlap mask does not have the same axes as a typical lesion cluster mask
+    How to resample to the atlas axes
+    # Load images
+    lesion_img = nib.load(thresh_lesionOverlapMask_path)  # your lesion overlap image
+    atlas_img = nib.load(
+        "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/helper files/harvard_new.nii")
+
+    # Resample lesion image to atlas resolution and space
+    lesion_resampled = ni.resample_to_img(lesion_img, atlas_img, interpolation='nearest')
+    resampled_thresh_lesionOverlapMask_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/resampled_thresh_lesionOverlap_Mask.nii"
+    nib.save(lesion_resampled, resampled_thresh_lesionOverlapMask_path)
+
     """
     # Load the lesion overlap mask
     img = nib.load(overlap_mask_path)
