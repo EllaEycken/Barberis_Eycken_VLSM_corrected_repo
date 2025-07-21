@@ -270,34 +270,38 @@ if __name__ == "__main__":
 
     """ VLSM IANSA PROJECT """
     ## Initialize some variables
-    # TODO: Vul dit zelf aan
-    variable = ""
-    variable_type = "Lexical"  # choices: see below
-    cluster_is_significant = True  # switch to false if not sign cluster
-    path_to_VLSM_folder = "C:/Users/u0146803/Documents/VLSM_masterthesis"
-    corrected_VLSM_output_folder_name = "VLSM_ANTAT_perm_1000_lesionregr_MCcorrected"
+    ## __________________________
+    # TODO: Fill this in yourself
+    variable = "Factor_1"
+    variable_type = "Grammatical"  # choices: see below
+    calculate_distribution_of_VLSM_output = True  # swith to false if you want to see distribution of lesion overlap
+    cluster_is_significant = False  # switch to false if not sign cluster
+    path_to_VLSM_folder = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA"
+    corrected_VLSM_output_folder_name = "VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected"
     threshold_abs = 1.645
 
-    # Pas dit niet zelf aan
+    # DO NOT CHANGE THIS
     if cluster_is_significant:
         cluster_type = "surviving_clusters"
-        plot_type = 'sign'
+        table_type = 'sign'
     else:
         cluster_type = "nonsign_cluster"
-        plot_type = 'nonsign'
+        table_type = 'nonsign'
 
-    if variable_type == "Semantics":
+    if calculate_distribution_of_VLSM_output:
+        analysis = "VLSM_output"  # Note: used to be 'distribution' in first analyses
+    else:
+        analysis = "lesion_overlap"
+
+
+    if variable == "Factor_1":
         colour = 'Oranges'
-    elif variable_type == "Phonology":
-        colour = 'Blues'
-    elif variable_type == "Lexical":
-        colour = "Greens"
-    elif variable_type == "Grammatical":
+    elif variable == "Factor_2":
+        colour = 'Greens'
+    elif variable == "Factor_3":
+        colour = "Blue"
+    elif variable == "Factor_4":
         colour = "Reds"
-    elif variable_type == "Macrostructure":
-        colour = "Purples"
-    elif variable_type == "Fluency":
-        colour = "YlOrBr"  # yellows doesn't exist
     # source: https://matplotlib.org/stable/users/explain/colors/colormaps.html
 
     cluster_img_path = os.path.join(path_to_VLSM_folder, 'output', corrected_VLSM_output_folder_name,
@@ -311,11 +315,13 @@ if __name__ == "__main__":
     check_VLSM_output_by_threshold(cluster_img_path, threshold_abs)
 
     # Output the result
-    """print(f"Number of voxels above the threshold: {above}")
+    """
+    print(f"Number of voxels above the threshold: {above}")
     print(f"Number of voxels below the threshold: {below}")
     print(f"Minimum value of voxels below the threshold: {min_below}")
     print(f"Maximum value of voxels below the threshold: {max_below}")
-    print(f"Number of voxels above zero: {above_zero}")"""
+    print(f"Number of voxels above zero: {above_zero}")
+    """
 
     plot_VLSM_cluster_new(cluster_img_path, threshold_abs)
     plot_VLSM_cluster_axial(cluster_img_path, threshold_abs)

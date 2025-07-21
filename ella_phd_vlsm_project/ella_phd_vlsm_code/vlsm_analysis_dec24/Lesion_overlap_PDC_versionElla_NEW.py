@@ -196,6 +196,7 @@ if __name__ == "__main__":
 
     out_path_thresh_lesionOverlapMask = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/thresh_lesionOverlap_Mask.nii"
 
+
     ### Functies
     # ------------
     unthresh_lesion_overlap_mask_path = make_lesionOverlapMask(lesion_files_path = path_to_lesion_files, out_path=out_path_unthresholded_lesionOverlapMask)
