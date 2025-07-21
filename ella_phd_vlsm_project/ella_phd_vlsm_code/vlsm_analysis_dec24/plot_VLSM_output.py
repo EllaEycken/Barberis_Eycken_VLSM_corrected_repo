@@ -1,9 +1,11 @@
-"""Script to plot VLSM-results"""
-## Description
-# This script allows for plotting the results of a VLSM-analysis.
+"""Script to plot VLSM-results
+------------------------------
+This script allows for plotting the results of a VLSM-analysis.
+The following functions have been generated:
+1)
 
 # NOTE: all VLSM output is with ABSOLUTE z-values !!! so no negative z-values !!!
-
+"""
 
 ## Imports
 import nibabel as nib

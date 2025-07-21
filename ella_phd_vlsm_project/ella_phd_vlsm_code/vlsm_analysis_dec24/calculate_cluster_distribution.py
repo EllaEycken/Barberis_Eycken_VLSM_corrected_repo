@@ -1,17 +1,26 @@
-"""Script to calculate voxel-wise lesion distribution across brain areas, based on an atlas"""
-## Description
-# This script calculates the voxel-wise lesion distribution across brain areas in 2 ways.
-# 1) calculate_lesion_distribution_cluster_based: how much % of the cluster lies in certain brain region?
-# input: lesion masks and an atlas (to base brain areas on)
-# output: a list of brain areas, the amount of lesioned voxels in those brain areas, and the relative % of the total
-# clustervolume that resides in that brain region
-# note: sum will add to 100% (total cluster = 100%)
-# 2) calculate_lesion_distribution_atlas_based: how much % of a certain brain region (atlas) is occupied by the cluster?
-# input: lesion masks and an atlas (to base brain areas on)
-# output: a list of brain areas, the amount of lesioned voxels in those brain areas, and the relative percentage of that
-# brain area that is lesioned (relative percentage of lesioned voxels in those brain areas).
-# note: sum will NOT add to 100% (nl per brain area, X% of that brain area is occupied by the cluster; then for next area etc)
-# Source: MRIcroGL
+"""Script to calculate voxel-wise lesion/cluster distribution across brain areas, based on an atlas
+-------------------------------------------------------------------------------------------------------
+This script calculates the voxel-wise lesion distribution across brain areas in 2 ways.
+1) calculate_lesion_distribution_cluster_based: how much % of the cluster lies in certain brain region?
+   input: lesion masks and an atlas (to base brain areas on)
+   output: a list of brain areas, the amount of lesioned voxels in those brain areas, and the relative % of the total
+   clustervolume that resides in that brain region
+   note: sum will add to 100% (total cluster = 100%)
+   source: MRIcroGL
+2) calculate_lesion_distribution_atlas_based: how much % of a certain brain region (atlas) is occupied by the cluster?
+   input: lesion masks and an atlas (to base brain areas on)
+   output: a list of brain areas, the amount of lesioned voxels in those brain areas, and the relative percentage of that
+   brain area that is lesioned (relative percentage of lesioned voxels in those brain areas).
+   note: sum will NOT add to 100% (nl per brain area, X% of that brain area is occupied by the cluster; then for next area etc)
+Two other functions add information/visualization:
+1)  locate_peak_value: Derive the brain location (using Harvard-Oxford atlas) of the voxel with the highest z-value
+output of the VLSM cluster
+2) make_histogram: Make histogram (bars) showing the regions i) in which x% of the cluster's voxels reside and ii) that
+have x% of their total voxels overlapping with the cluster
+
+To run the script, change variable names and paths where prompted (via a TODO statement)
+
+"""
 
 
 ## Imports
@@ -20,6 +29,8 @@ import nilearn.image as ni
 import numpy as np
 import pandas as pd
 import os
+import sys
+from contextlib import redirect_stdout
 
 from matplotlib import pyplot as plt
 
@@ -99,7 +110,7 @@ harvard_brain_area_names = [ # source: https://scalablebrainatlas.incf.org/servi
 def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path, tables_DIR, variable, table_type, analysis
 
 ):
-    """
+    """ Calculate how much % of the cluster is in a specific brain region (df and Excel file)
 
     :param lesion_img_path: lesion masks
     :param atlas_img_path: atlas (to base brain areas on)
@@ -108,7 +119,7 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
     :param table_type: which type of table (significant or non-significant) to calculate lesion distribution for
     :param analysis: whether you want to calculate the VLSM cluster distribution across brain areas or the distribution
     of the lesion overlap across brain areas
-    :return:  how much % of the cluster lies in certain brain region? Will return a list of brain areas,
+    :return: a df and Excel file, showing how much % of the cluster lies in certain brain region? Will return a list of brain areas,
     the amount of lesioned voxels in those brain areas, and the relative % of the total clustervolume that resides in
     that brain region
 
@@ -195,11 +206,12 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
 
 
 
-### NEW PART: how muc % of that brain region (in the atlas) is occupied by the cluster?
+### NEW PART: how much % of that brain region (in the atlas) is occupied by the cluster?
 # -------------------------------------------------------------------------
 def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, tables_DIR, variable, table_type, analysis
                                               ):
     """
+    Calculate how much % of a brain region (as specified in an atlas) is occupied by the cluster (df and Excel file)
 
     :param lesion_img_path: lesion masks
     :param atlas_img_path: atlas (to base brain areas on)
@@ -208,7 +220,7 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
     :param table_type: which type of table (significant or non-significant) to calculate lesion distribution for
     :param analysis: whether you want to calculate the VLSM cluster distribution across brain areas or the distribution
     of the lesion overlap across brain areas
-    :return:  how much % of a certain brain region (atlas) is occupied by the cluster? a list of brain areas,
+    :return: a df and Excel file, showing how much % of a certain brain region (atlas) is occupied by the cluster. a list of brain areas,
     the amount of lesioned voxels in those brain areas, and the relative percentage of that brain area that is lesioned
     (relative percentage of lesioned voxels in those brain areas)
 
@@ -304,8 +316,18 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
 
 
 
-def locate_peak_value(lesion_img_path, atlas_img_path
+def locate_peak_value(lesion_img_path, atlas_img_path, tables_dir, variable, table_type
                         ):
+    """
+    Derive the brain location (using HO atlas) of the voxel with the highest z-value output of the VLSM cluster
+    :param lesion_img_path: the path to the VLSM output cluster nii-file (i necessary: the file containing z-values corrected for multiple comparisons)
+    :param atlas_img_path: the path to the atlas that is used to locate the voxels across the brain areas (eg H-O atlas)
+    :param tables_dir: the path to the tables directory in which a text log folder will be created for this analysis
+    :param variable: which variable (behavioral) is analysed?
+    :param table_type: is this a significant or non-significant result?
+
+    :return: a tuple, consisting of highest_value_index, region_index, region_name
+    """
     # Load the lesion image and Harvard Oxford Atlas
     lesion_img = nib.load(lesion_img_path)
     atlas_img = nib.load(atlas_img_path)
@@ -327,11 +349,20 @@ def locate_peak_value(lesion_img_path, atlas_img_path
     region_index = atlas_data[highest_value_index]
     region_name = harvard_brain_area_names[int(region_index)]
 
-    # print results
-    print('peak value of the cluster is ',np.max(lesion_data) )  # not argmax: argmax gives coordinates (in original file) of max value
-    print('index of the peak value is', highest_value_index)
-    print('region index of the peak value is', region_index)
-    print('region name of the peak value is', region_name)
+    # Create path to text_log_dir
+    output_folder = os.path.join(tables_dir, "logs")
+    os.makedirs(output_folder, exist_ok=True) # create folder if it doesn't exist
+    log_path = os.path.join(output_folder, f"log_VLSM_peak_value_{variable}_{table_type}.txt")  # define log file path
+
+    # Open the log file and redirect print output
+    with open(log_path, 'w') as log_file:
+        with redirect_stdout(log_file):
+            print("===== Peak Value VLSM output =====")
+            print(f"Variable: {variable}, Table type: {table_type}")
+            print('peak value of the cluster is ',np.max(lesion_data) )  # not argmax: argmax gives coordinates (in original file) of max value
+            print('index of the peak value is', highest_value_index)
+            print('region index of the peak value is', region_index)
+            print('region name of the peak value is', region_name)
 
     return highest_value_index, region_index, region_name
 
@@ -418,6 +449,7 @@ def make_histogram(distribution_excel,save_plot_path
 if __name__ == "__main__":
 
     """ FOR VLSM OUTPUT CLUSTERS """
+    """--------------------------"""
     ## Initialize some variables
     ## --------------------------
     # TODO: Fill this out yourself
@@ -463,6 +495,7 @@ if __name__ == "__main__":
     # TODO: make df_distribution_variable yourself first
     distribution_excel = os.path.join(path_to_VLSM_folder, 'df_distribution_short_Factor_3.xlsx')
 
+
     ## Run the functions (don't change, only comment out if you don't want to run the function)
     ## -----------------
     # Calculate the cluster distribution
@@ -489,6 +522,9 @@ if __name__ == "__main__":
     locate_peak_value(
         lesion_img_path,
         atlas_img_path,
+        tables_dir = tables_DIR,
+        variable=variable,
+        table_type=table_type,
     )
     
     # make_histogram(distribution_excel, figures_DIR)
@@ -496,7 +532,7 @@ if __name__ == "__main__":
 
 
     """FOR LESION OVERLAP CLUSTER """
-    """
+    """---------------------------"""
     # unthresh_lesionOverlapMask_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_Mask.nii"
     thresh_lesionOverlapMask_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/thresh_lesionOverlap_Mask.nii"
 
@@ -529,4 +565,3 @@ if __name__ == "__main__":
         variable_lesionOverlap,
         table_type_lesionOverlap
     )
-    """

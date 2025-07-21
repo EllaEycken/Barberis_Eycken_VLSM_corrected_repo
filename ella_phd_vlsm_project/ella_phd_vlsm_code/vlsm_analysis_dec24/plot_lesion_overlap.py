@@ -1,4 +1,21 @@
-"Script to calculate and plot lesion overlap"
+"""Script to plot lesion overlap
+---------------------------------
+This script allows to calculate the lesion overlap between subjects.
+More specifically, the following functions are executed:
+1) make_lesionOverlapMask: create a lesion-overlap mask (unthresholded for a minimum amount of subjects with overlap).
+This function is then used to plot the lesion overlap (a threshold is applied in the plotting functions)
+2) threshold_lesionOverlapMask: Threshold a lesion overlap mask to include only voxels with overlap >= threshold.
+This threshold function can be used elsewhere, when you want to use a nifti-file of a thresholded lesion overlap 'cluster'
+(e.g., to calculate the lesion overlap distribution: use this file in the calculate_cluster_distribution.py script).
+In this script, it is not used to plot the lesion overlap, as the thresholding is already included in the plotting functions.
+3) plot_lesionOverlap_Zcoord: Plot the lesion overlap among subjects in an axial plot (using Z-coordinates)
+4) plot_lesionOverlap_surf: Plot the lesion overlap among subjects in a surface map plot
+To run the script, change variable names and paths where prompted (via a TODO statement)
+
+Note: if you get errors, it is often 1) either because of packages, install earlier versions,
+or 2) because you have problems with your dimensions of your images not matching across subjects do not match.
+Read the manual of the VLSM at the bottom, there is more info included.
+"""
 
 import nibabel as nib
 import numpy as np
@@ -11,11 +28,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from nilearn import surface
 
-### script om een lesion overlap map te maken over proefpersonen heen.
-
-# als je errors krijgt, dan is dit vaak 1) ofwel door packages, installeer dan eerdere versies, of 2) doordat je problemen hebt met je dimensies van je beelden die over
-# proefpersonen heen niet overeenkomen. Lees de manual van de VLSM onderaan, daar heb ik meer info geplaatst.
-
 
 
 def make_lesionOverlapMask(lesion_files_path,out_path
@@ -27,21 +39,19 @@ def make_lesionOverlapMask(lesion_files_path,out_path
     :param out_path: output path for the lesion overlap mask file (= .nii file)
     :return: the path to a lesion overlap mask file (= .nii file)
     """
-    allFiles = [f for f in os.listdir(lesion_files_path) if f.endswith('.nii')]  # lijst alle files (=alle proefpersonen)
-    i = 0 # zal de maximale lesion overlap zijn (zv)
-    # bvb Pieter  is de hoogste som = 7, dus een maximum lesionOverlap van 7 proefpersonen zal hier (zie output) dus i = 7 worden
-    # aanvulling Ella: i zal 49 worden (49 participanten)
+    allFiles = [f for f in os.listdir(lesion_files_path) if f.endswith('.nii')]  # list with all files (= all subjects)
+    i = 0 # will be the maximal lesion overlap (sf)
+    # Ex: in PDC, the highest sum = 7, so maximal lesion overlap = 7 persons (i = 7); in IANSA i = 49.
 
     for subject in allFiles:
-        path_subject = lesion_files_path + subject # concateneert het pad
+        path_subject = lesion_files_path + subject # concatenate the path
         img = nib.load(path_subject)
         if i == 0:
             lesionOverlap = np.round(np.array(img.get_fdata()))
         else:
             lesionOverlap = lesionOverlap + np.round(np.array(img.get_fdata()))
         i += 1
-        # alle individuele data zijn binary files, 3D
-        # om lesionOverlap te maken, maak ik een som van alle binary files
+        # Note: all individual data are binary files, 3D matrices. To make lesionOverlap, sum all binary files
 
     print("Shape van individuele data: {0}".format(lesionOverlap.shape))
     print("Unieke waarden: {0}".format(np.unique(lesionOverlap)))
@@ -49,9 +59,9 @@ def make_lesionOverlapMask(lesion_files_path,out_path
 
     lesionOverlapMask = nib.Nifti1Image(lesionOverlap,
                                         img.affine)
-    # affine argument dat nilearn nodig heeft.
-    # die img werd geladen in vorige for-loop hierboven (is dus van 1 participant)maar aangezien alle beelden
-    # zelfde dimensies hebben, is die affine ook voor iedereen hetzelfde.
+    # affine argument needed by nilearn.
+    # that img was loaded in previous for-loop above (so is from 1 participant)but since all images
+    # have the same dimensions, that affine is also the same for everyone.
     nib.save(lesionOverlapMask, out_path)
 
     print(f"Unthresholded lesion overlap mask saved to: {out_path}")
@@ -101,12 +111,13 @@ def threshold_lesionOverlapMask(overlap_mask_path, out_path, threshold):
 def plot_lesionOverlap_Zcoord(unthresholded_overlap_mask_path,threshold, out_path
 ):
     """
-
+    Plot the lesion overlap among subjects in an axial plot (using Z-coordinates)
     :param unthresholded_overlap_mask_path: the original unthresholded lesion overlap mask (nifti-file) PATH, based on the function make_lesionOverlapMask
     :param threshold: the minimum amount of subjects (absolute number) that should have overlapping lesions
     to be shown as overlap in the plot
-        # vb treshold = 1: vanaf lesionoverlap van 1 persoon (dus gewoon letsel van ieder persoon) wordt dit weergegeven op de plot
-        # vb treshold = 2: vanaf lesionoverlap tussen 2 personen wordt dit weergegeven op de plot (dus letsels die slechts bij 1 persoon voorkomen, worden niet getoond)
+        # Ex threshold = 1: from lesion overlap of 1 person (in essence lesion of each individual), it will be shown on the plot
+        # Ex threshold = 2: from lesion overlap between 2 persons, it will be shown on the plot
+        (in essence, lesions that only occur in 1 person will NOT be shown)
     :param out_path: the output path for the lesion overlap PLOT
     :return: a lesion overlap plot, in the form of Zcoord layer figures (side-by-side) (this can also easily be made
     using MRIcroGL manually, without this code)
@@ -137,16 +148,18 @@ def plot_lesionOverlap_Zcoord(unthresholded_overlap_mask_path,threshold, out_pat
 def plot_lesionOverlap_surfMap(unthresholded_overlap_mask_path, threshold, out_path
 ):
     """
-
-    :param unthresholded_overlap_mask_path: the original, unthresholded lesion overlap mask (nifti-file) PATH, based on the function make_lesionOverlapMask
+    Plot the lesion overlap among subjects in a surface map plot
+    :param unthresholded_overlap_mask_path: the original, unthresholded lesion overlap mask (nifti-file) PATH,
+    based on the function make_lesionOverlapMask
     :param threshold: the minimum amount of subjects (absolute number) that should have overlapping lesions
     to be shown as overlap in the plot
-        # vb treshold = 1: vanaf lesionoverlap van 1 persoon (dus gewoon letsel van ieder persoon) wordt dit weergegeven op de plot
-        # vb treshold = 2: vanaf lesionoverlap tussen 2 personen wordt dit weergegeven op de plot (dus letsels die slechts bij 1 persoon voorkomen, worden niet getoond)
+        # Ex threshold = 1: from lesion overlap of 1 person (in essence lesion of each individual), it will be shown on the plot
+        # Ex threshold = 2: from lesion overlap between 2 persons, it will be shown on the plot
+        (in essence, lesions that only occur in 1 person will NOT be shown)
     :param out_path: the output path for the lesion overlap PLOT
     :return: a lesion overlap plot, in the form of a Surface Map
 
-    Source: heeft PDCs voorkeur en kan niet (goed) in MRIcroGL
+    Source: suggested by PDC, cannot be done (easily) in MRIcroGL
     """
     # Get the leion Overlap Mask (nifti)
     img = nib.load(unthresholded_overlap_mask_path)
@@ -177,72 +190,74 @@ def plot_lesionOverlap_surfMap(unthresholded_overlap_mask_path, threshold, out_p
 
 
 if __name__ == "__main__":
-    ### Voorbereiding
+    ### Preparations
     # ----------------
-    # TODO: pas paden aan
+    # TODO: change paths
     path_to_lesion_files = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/"
-    # "D:/PhD Pieter De Clercq/voorbeeldscripts_info/voorbeeldData_lesion_overlap_map/" # hierin staat lijstje van letsel-files (lesion extracted files per subject eg sub-060.nii)
-    # vergeet niet: / ipv \ ; en / op einde path-naam
+    # "D:/PhD PDC/voorbeeldscripts_info/voorbeeldData_lesion_overlap_map/" # hierin staat lijstje van letsel-files (lesion extracted files per subject eg sub-060.nii)
+    # Don't forget : / instead of \ ; and / in the end of the path name
     allFiles = [f for f in os.listdir(path_to_lesion_files) if f.endswith('.nii')]  # lijst alle files (=alle proefpersonen)
     out_path_unthresholded_lesionOverlapMask = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_Mask.nii"
-    out_path_lesionOverlapPlot_Z_thresh0 = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_noT_TRYOUT.svg"
+    out_path_lesionOverlapPlot_Z_thresh0 = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_noT.svg"
     out_path_lesionOverlapPlot_Z_thresh2 = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_Tresh2.svg"
-    out_path_lesionOverlapPlot_Z_thresh5 = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_Tresh5_TRYOUT.svg"
+    out_path_lesionOverlapPlot_Z_thresh5 = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_Tresh5.svg"
 
-    out_path_lesionOverlapPlot_surf_thresh0 = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_surf_noT_TRYOUT.svg"
+    out_path_lesionOverlapPlot_surf_thresh0 = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_surf_noT.svg"
     out_path_lesionOverlapPlot_surf_thresh2 = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_surf_Tresh2.svg"
-    out_path_lesionOverlapPlot_surf_thresh5 = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_surf_Tresh5_TRYOUT.svg"
+    out_path_lesionOverlapPlot_surf_thresh5 = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_surf_Tresh5.svg"
 
 
     out_path_thresh_lesionOverlapMask = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/thresh_lesionOverlap_Mask.nii"
 
 
-    ### Functies
+    ### Run the functions
     # ------------
-    unthresh_lesion_overlap_mask_path = make_lesionOverlapMask(lesion_files_path = path_to_lesion_files, out_path=out_path_unthresholded_lesionOverlapMask)
-    # TODO: pas threshold aan obv je voorkeur
+    unthresh_lesion_overlap_mask_path = make_lesionOverlapMask(lesion_files_path = path_to_lesion_files,
+                                                               out_path=out_path_unthresholded_lesionOverlapMask,
+                                                               )
     atlas_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/helper files/harvard_new.nii"
-    thresh_lesion_overlap_mask_path = threshold_lesionOverlapMask(unthresh_lesion_overlap_mask_path, out_path=out_path_thresh_lesionOverlapMask, threshold = 5, atlas_img_path= atlas_path)
-    # Note: this latter function will only be used ELSEWHERE, nl only in lesion_distribution_calculation.py to calculate which regions lie in the overlap region.
+    thresh_lesion_overlap_mask_path = threshold_lesionOverlapMask(unthresh_lesion_overlap_mask_path,
+                                                                  out_path=out_path_thresh_lesionOverlapMask,
+                                                                  threshold = 5, # TODO: change threshold
+                                                                  )
+    # Note: this latter function will only be used ELSEWHERE, nl only in lesion_distribution_calculation.py
+    # to calculate which regions lie in the overlap region.
 
-    # TODO: pas threshold en out_path (zie ook boven) aan obv je voorkeur
+    # TODO: change threshold en out_path (see above)
+
     ## Z-coord plots
-    """
-    # Plot zonder tresholds (= plot van overlap tussen alle participanten, zonder beperking op 'minimale overlap')
+    # Plot without thresholds (= plot of overlap between ALL subjects, without limitation of 'minimal overlap')
     plot_lesionOverlap_Zcoord(unthresh_lesion_overlap_mask_path,
                               threshold = 0,
                               out_path = out_path_lesionOverlapPlot_Z_thresh0
                               )
     
-    # Plot met threshold = 2
+    # Plot threshold = 2
     plot_lesionOverlap_Zcoord(unthresh_lesion_overlap_mask_path,
                               threshold=2,
                               out_path=out_path_lesionOverlapPlot_Z_thresh2
                               )
-    """
-    # Plot met threshold = 5
-    # voor Ella's studie: VLSM analyse minimal_lesion_overlap = 10%
-    # => absolute aantal = 5 (van n tot = 50): kies treshold = 5: vanaf 5 personen overlap, wordt dit getoond in plot
+    # Plot threshold = 5
+    # IANSA: VLSM analysis minimal_lesion_overlap = 10%
+    # => absolute amount = 5 (van n tot = 50): choose threshold = 5: from 5 persons overlap, this is shown in the plot
     plot_lesionOverlap_Zcoord(unthresh_lesion_overlap_mask_path,
                               threshold=5,
                               out_path=out_path_lesionOverlapPlot_Z_thresh5
                               )
 
     ## Surface map plots
-    """
-    # Plot zonder thresholds
+    # Plot without thresholds
     plot_lesionOverlap_surfMap(unthresh_lesion_overlap_mask_path,
                                threshold = 0,
                                out_path=out_path_lesionOverlapPlot_surf_thresh0
                                )
     
-    # Plot met threshold = 2
+    # Plot with threshold = 2
     plot_lesionOverlap_surfMap(unthresh_lesion_overlap_mask_path,
                                threshold=2,
                                out_path=out_path_lesionOverlapPlot_surf_thresh2
                                )
-    """
-    # Plot met threshold = 5
+    # Plot with threshold = 5
     plot_lesionOverlap_surfMap(unthresh_lesion_overlap_mask_path,
                                threshold=5,
                                out_path=out_path_lesionOverlapPlot_surf_thresh5

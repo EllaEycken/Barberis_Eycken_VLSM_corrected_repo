@@ -37,7 +37,7 @@ from bisect import bisect_left
 # !!! UPDATE: output VLSM-analysis IS correct (with cluster perm AND with only values above corrected p threshold, all below set to zero)
 # !!! further VLSM analyses:
 # - lesion_distribution_calculation.py: to examine in which regions the cluster lies
-# - VLSM_plotting.py: to plot VLSM results -> legenda of plot must be taken into account!
+# - plot_VLSM_output.py: to plot VLSM results -> legenda of plot must be taken into account!
 
 
 ## -- PREPARATIONS --
