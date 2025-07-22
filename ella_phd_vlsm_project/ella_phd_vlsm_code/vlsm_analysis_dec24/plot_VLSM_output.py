@@ -1,9 +1,15 @@
-"""Script to plot VLSM-results"""
-## Description
-# This script allows for plotting the results of a VLSM-analysis.
+"""Script to plot VLSM-results
+------------------------------
+This script allows for plotting the results of a VLSM-analysis.
+1) check_VLSM_output_by_threshold: Check the VLSM-analysis output by threshold (returns text file and tuple)
+2) plot_VLSM_cluster_surfMap: Plot the VLSM output cluster on a surface map
+3) plot_VLSM_cluster_axial: Plot the VLSM output cluster on an axial plot (using Z-coordinates)
+
+To run the script, change variable names and paths where prompted (via a TODO statement)
 
 # NOTE: all VLSM output is with ABSOLUTE z-values !!! so no negative z-values !!!
-
+"""
+from contextlib import redirect_stdout
 
 ## Imports
 import nibabel as nib
@@ -21,7 +27,7 @@ from bisect import bisect_left
 
 
 ## VARIABLES
-# dit zijn nog enkele variabelen die we nodig hebben om te plotten (based on PDC):
+## ---------
 fsaverage = datasets.fetch_surf_fsaverage('fsaverage5')
 # = a coordinate system for the cortical surface, based on intersubject averaging
 # nb 5: low-resolution fsaverage5 mesh (10242 nodes)
@@ -40,7 +46,22 @@ curv_left_sign = np.sign(curv_left)
 
 
 ## FUNCTIONS
-def check_VLSM_output_by_threshold(cluster_img_path, threshold = 1.645):
+## ---------
+def check_VLSM_output_by_threshold(cluster_img_path, tables_dir, variable, table_type, threshold = 1.645
+                                   ):
+    """
+    Check the VLSM-analysis output by threshold (returns text file and tuple)
+    :param cluster_img_path: the path to the cluster image (aka the output of the VLSM-analysis, corrected for Multiple
+    Comparisons if necessary)
+    :param tables_dir: the path to the directory containing the tables in which the VLSM output is stored
+    :param variable: which variable is analysed
+    :param table_type: whether the results are significant or non-significant
+    :param threshold: the corrected z-threshold (corresponding to the corrected p-threshold), defaults to 1.645
+    :return: a tuple containing the following parameters:
+    (voxels_above_threshold, voxels_below_threshold, min_value_above_threshold, max_value_above_threshold,
+            min_value_below_threshold, max_value_below_threshold, voxels_above_zero, voxels_below_zero)
+            and a text file stored in the tables_dir --> log folder
+    """
     # Load the NIfTI image using nibabel
     img = nib.load(cluster_img_path)
 
@@ -72,26 +93,44 @@ def check_VLSM_output_by_threshold(cluster_img_path, threshold = 1.645):
     voxels_above_zero = np.sum(img_data > 0)
     voxels_below_zero = np.sum(img_data < 0)
 
-    # output results
-    print('voxels_above_threshold', voxels_above_threshold)
-    print('voxels_below_threshold', voxels_below_threshold)
+    # Create path to text_log_dir
+    output_folder = os.path.join(tables_dir, "logs")
+    os.makedirs(output_folder, exist_ok=True)  # create folder if it doesn't exist
+    log_path = os.path.join(output_folder, f"log_VLSM_output_{variable}_{table_type}.txt")  # define log file path
 
-    print('min_value_above_threshold', min_value_above_threshold)
-    print('max_value_above_threshold', max_value_above_threshold)
+    # Open the log file and redirect print output
+    with open(log_path, 'w') as log_file:
+        with redirect_stdout(log_file):
 
-    print('min_value_below_threshold', min_value_below_threshold)
-    print('max_value_below_threshold', max_value_below_threshold)
+            # output results
+            print('voxels_above_threshold', voxels_above_threshold)
+            print('voxels_below_threshold', voxels_below_threshold)
 
-    print('voxels_above_zero', voxels_above_zero)
-    print('voxels_below_zero', voxels_below_zero)
+            print('min_value_above_threshold', min_value_above_threshold)
+            print('max_value_above_threshold', max_value_above_threshold)
+
+            print('min_value_below_threshold', min_value_below_threshold)
+            print('max_value_below_threshold', max_value_below_threshold)
+
+            print('voxels_above_zero', voxels_above_zero)
+            print('voxels_below_zero', voxels_below_zero)
 
     return (voxels_above_threshold, voxels_below_threshold, min_value_above_threshold, max_value_above_threshold,
             min_value_below_threshold, max_value_below_threshold, voxels_above_zero, voxels_below_zero)
 
 
-def plot_VLSM_cluster_new(cluster_img_path, zthreshold=1.645
+def plot_VLSM_cluster_surfMap(cluster_img_path, colour, variable, plot_type, zthreshold=1.645
 
                           ):
+    """
+    Plot the VLSM output cluster on a surface map
+    :param cluster_img_path: the path to the VLSM cluster (nii-file)
+    :param colour: the colour of the surface map
+    :param variable: which variable is analysed
+    :param plot_type: whether the plot is significant or not
+    :param zthreshold: the threshold used to perform the VLSM analysis (corrected threshold, z-value)
+    :return: the plot of the VLSM output cluster
+    """
     # Load the data
     cluster_img = nib.load(cluster_img_path)
 
@@ -134,9 +173,17 @@ def plot_VLSM_cluster_new(cluster_img_path, zthreshold=1.645
     plotting.show()
 
 
-def plot_VLSM_cluster_axial(cluster_img_path, zthreshold=1.645
+def plot_VLSM_cluster_axial(cluster_img_path, colour, variable, plot_type, zthreshold=1.645
                             ):
-
+    """
+    Plot the VLSM output cluster on an axial plot (using Z-coordinates)
+    :param cluster_img_path: the path to the VLSM cluster (nii-file)
+    :param colour: the colour of the surface map
+    :param variable: which variable is analysed
+    :param plot_type: whether the plot is significant or not
+    :param zthreshold: the threshold used to perform the VLSM analysis (corrected threshold, z-value)
+    :return: the plot of the VLSM output cluster
+    """
     # Load the data
     cluster_img = nib.load(cluster_img_path)
     # cluster_data = img.get_fdata()  # negeer oranje stippellijn
@@ -155,7 +202,7 @@ def plot_VLSM_cluster_axial(cluster_img_path, zthreshold=1.645
     plotting.show()
 
 
-def plot_VLSM_cluster(cluster_img_path,
+def plot_VLSM_cluster_OLD(cluster_img_path,
 
 ):
     """ Plot the surviving/largest cluster from a univariate VLSM-analysis for a certain behavioural variable.
@@ -213,23 +260,27 @@ def plot_VLSM_cluster(cluster_img_path,
 
 
 if __name__ == "__main__":
-    # Define the file paths for the lesion mask and atlas image
+    """ VLSM MASTERTHESIS PROJECT """
     ## Initialize some variables
-    # TODO: Vul dit zelf aan
+    ## -------------------------
+    # TODO: Change this yourself
     variable = "ANTAT_TTR"
     variable_type = "Lexical"  # choices: see below
     cluster_is_significant = True  # switch to false if not sign cluster
     path_to_VLSM_folder = "C:/Users/u0146803/Documents/VLSM_masterthesis"
+    tables_dir = os.path.join(path_to_VLSM_folder, 'tables')
     corrected_VLSM_output_folder_name = "VLSM_ANTAT_perm_1000_lesionregr_MCcorrected"
     threshold_abs = 1.645
 
-    # Pas dit niet zelf aan
+    # DO NOT CHANGE THIS
     if cluster_is_significant:
         cluster_type = "surviving_clusters"
         plot_type = 'sign'
+        table_type = 'sign'
     else:
         cluster_type = "nonsign_cluster"
         plot_type = 'nonsign'
+        table_type = 'nonsign'
 
     if variable_type == "Semantics":
         colour = 'Oranges'
@@ -253,17 +304,53 @@ if __name__ == "__main__":
 
 
     # Get the voxel counts
-    check_VLSM_output_by_threshold(cluster_img_path, threshold_abs)
+    check_VLSM_output_by_threshold(cluster_img_path, tables_dir, variable, table_type, threshold_abs)
 
-    # Output the result
-    """print(f"Number of voxels above the threshold: {above}")
-    print(f"Number of voxels below the threshold: {below}")
-    print(f"Minimum value of voxels below the threshold: {min_below}")
-    print(f"Maximum value of voxels below the threshold: {max_below}")
-    print(f"Number of voxels above zero: {above_zero}")"""
-
-    plot_VLSM_cluster_new(cluster_img_path, threshold_abs)
-    plot_VLSM_cluster_axial(cluster_img_path, threshold_abs)
-    # plot_VLSM_cluster(cluster_img_path)
+    # Plot the clusters
+    plot_VLSM_cluster_surfMap(cluster_img_path,colour, variable, plot_type, threshold_abs)
+    plot_VLSM_cluster_axial(cluster_img_path, colour, variable, plot_type, threshold_abs)
+    # plot_VLSM_cluster_OLD(cluster_img_path)
 
 
+
+    """ VLSM IANSA PROJECT """
+    ## Initialize some variables
+    ## __________________________
+    # TODO: Fill this in yourself
+    variable = "Factor_1"
+    variable_type = "Grammatical"  # choices: see below
+    calculate_distribution_of_VLSM_output = True  # swith to false if you want to see distribution of lesion overlap
+    cluster_is_significant = False  # switch to false if not sign cluster
+    path_to_VLSM_folder = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA"
+    corrected_VLSM_output_folder_name = "VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected"
+    tables_dir = os.path.join(path_to_VLSM_folder, 'tables')
+    threshold_abs = 1.645
+
+    # DO NOT CHANGE THIS
+    if variable == "Factor_1":
+        colour = 'Oranges'
+    elif variable == "Factor_2":
+        colour = 'Greens'
+    elif variable == "Factor_3":
+        colour = "Blue"
+    elif variable == "Factor_4":
+        colour = "Reds"
+    # source: https://matplotlib.org/stable/users/explain/colors/colormaps.html
+
+    cluster_img_path = os.path.join(path_to_VLSM_folder, 'output', corrected_VLSM_output_folder_name,
+                                    f"Z{cluster_type}_{variable}.nii")
+    # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_4.nii"
+    # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/sub-01.nii"
+    # Path to cluster img (nifti-file), make sure to use / instead of \; and add .nii extension
+    save_plot_path = os.path.join(path_to_VLSM_folder, 'figures')
+
+
+    ## Functions
+    ## ---------
+    # Get the voxel counts
+    check_VLSM_output_by_threshold(cluster_img_path, tables_dir, variable, table_type, threshold_abs)
+
+    # Plot the results
+    plot_VLSM_cluster_surfMap(cluster_img_path, colour, variable, plot_type, threshold_abs)
+    plot_VLSM_cluster_axial(cluster_img_path, colour, variable, plot_type, threshold_abs)
+    # plot_VLSM_cluster_OLD(cluster_img_path)
