@@ -1,3 +1,57 @@
+"""Script to calculate and plot CORRECTED VLSM-statistics (using permuation-based cluster thresholds)
+-------------------------------------------------------------------------------------------------------
+This script performs and plots univariate voxel-wise lesion-symptom mapping corrected for multiple comparisons
+using permutation testing, based on NiiStat outcomes.
+
+1) What do you need before running this script:
+- permutation tests per variable: 5000 (or modify this yourself) permutation tests,
+that will be stored in a 'permTest' folder in the VLSM_output directory.
+- (uncorrected) z-statistic maps (per variable) of VLSM-analysis: nii-file containing z-statistics (matrix),
+that will be stored in VLSM output folder.
+The permutation tests and (uncorrected) z-statistics are calculated in Matlab with NiiStat software.
+
+2) Workflow to correct for multiple comparisons, using the data above:
+- First you select uncorrected p-value. For example p=.01, which is Z=2.33. These Z-values above 2.33 you keep,
+everything below = 0. Do this for effective Z-map as well as for the 1000 permutation tests.
+- Next, you are going to do a kind of “correction for multiple comparisons” by means of
+cluster-based permutation testing (Winkler et al., 2014) using the method implemented in Stark et al. (2019).
+    i) Determine the cluster size in all 5000 permutation tests. A cluster is a group of voxels with Z-value > 2.33
+    ii) then you rank the cluster sizes per permutation test
+    iii) then you choose a particular p-value on which to correct. If you choose p<.05 threshold,
+    then your threshold = 250th largest cluster size of all 5000 permutation tests.
+    iv) then you use that cluster size to correct for multiple comparisons.
+    v) then you set in your effective Z-map all voxels = 0 where those voxels
+    do not belong to a cluster with a size >= your cluster size you just calculated above.
+    all voxels that survive this are significant.
+Ref: Stark, B. C. (2019). A comparison of three discourse elicitation methods in aphasia and age-matched adults:
+Implications for language assessment and outcome. American Journal of Speech-Language Pathology, 28(3),
+1067–1083. https://doi.org/10.1044/2019_AJSLP-18-0265
+
+
+IMPORTANT: think carefully whether you are interested in negative or positive Z-values.
+For example: in PDC, brain lesions should correlate to lower brain response (lower brain response = worse).
+So I was interested in negative Z-values.
+Imagine you are researching semantic errors: brain lesions should correlate with more semantic errors
+(“semantic errors” = Worse), then you are interested in positive Z-values.
+# in IANSA': brain lesions and their correlation to factors and degree to which someone matches that factor
+=> interested in POSITIVE z-values
+
+NOTE: if you get errors, it is often 1) either because of packages, install earlier versions, or 2) because you
+have problems with your dimensions of your images not matching across subjects.
+Read the manual of the VLSM at the bottom, more info there.
+
+NOTE: final results on Z-file and plot show permutation-based corrected z-clusters
+(that survived cluster threshold or that were large enough) => z-values below the corrected z threshold are set to zero.
+
+NOTE: This script should be run
+
+If you want to perform further analyses on the VLSM output:
+- calculate_cluster_distribution.py: to examine in which regions the VLSM output cluster lies
+- plot_VLSM_output.py: to plot VLSM results -> legenda of plot must be taken into account!
+
+"""
+
+## IMPORT
 import nibabel as nib
 from nilearn import image, regions
 import numpy as np
@@ -5,39 +59,6 @@ from scipy import ndimage
 from nilearn import plotting, datasets, surface
 import os
 from bisect import bisect_left
-
-### ------ Script voor het plotten en bepalen van thresholds bij cluster-based permutation tests -----
-
-## -- WHAT ---
-# -------------
-# De permutation tests zijn berekend in Matlab met die niistat software. Als output krijg je 1000 (of pas dit zelf aan) permutation tests
-
-# Workflow om te corrigeren voor multiple comparisons:
-# eerst selecteer je uncorrected p-waarde. Bijvoorbeeld p=.01, dat is Z=2.33. Deze Z-waardes boven 2.33 behoud je, alles eronder zet je = 0. Doe dit zowel bij effectieve Z-map als bij de 1000 permutation tests
-# daarna ga je een soort van "correctie voor multiple comparisons" doen door cluster size te bepalen in alle 1000 permutation tests. Een cluster is een groep van voxels waarvan die een Z-waarde hebben > 2.33
-# daarna rank je de cluster sizes per permutation test
-# dan kies je een bepaalde p-waarde waarop je corrigeert. Als je p<.05 threshold kiest, dan is je threshold = 50ste grootste cluster size van alle 1000 permutation tests
-# die cluster size gebruik je om te corrigeren voor multiple comparisons.
-# daarna zet je in je effectieve Z-map alle voxels = 0 waar die voxels niet behoren tot een cluster met een size >= je cluster size die je net berekend hebt hierboven
-# alle voxels die dit overleven, zijn significant. Lees paper op het gemak
-
-
-# BELANGRIJK: denk goed na of je geïnteresseerd bent in negatieve of positieve Z-waarden.
-# Bijvoorbeeld: in mijn paper is lagere hersenrespons = Slechter. Dus was ik geïnteresseerd in negatieve Z-waarden.
-# Stel je voor dat je onderzoekt meer "semantische fouten" = slechter, dan ben je geïnteresseerd in positieve Z-waarden.
-# in Ella's geval: factoren en mate waarin iemand overeenkomt met die factor => geïnteresseerd in POSITIEVE z-waarden
-
-# als je errors krijgt, dan is dit vaak 1) ofwel door packages, installeer dan eerdere versies, of 2) doordat je problemen hebt met je dimensies van je beelden die over
-# proefpersonen heen niet overeenkomen. Lees de manual van de VLSM onderaan, daar heb ik meer info geplaatst.
-
-# IMPORTANT NOTE:
-# final results on Z-file and plot show perm-based z-clusters (that survived cluster threshold or that were large enough.
-# ((HOWEVER, the files still show the mask on top of the ORIGINAL img_data, so not on top of the THRESHOLDED ('uncorrected p-threshold') img_data
-# For further analyses, z-values below 'uncorrected' p-value must be EXCLUDED!))
-# !!! UPDATE: output VLSM-analysis IS correct (with cluster perm AND with only values above corrected p threshold, all below set to zero)
-# !!! further VLSM analyses:
-# - lesion_distribution_calculation.py: to examine in which regions the cluster lies
-# - plot_VLSM_output.py: to plot VLSM results -> legenda of plot must be taken into account!
 
 
 ## -- PREPARATIONS --
