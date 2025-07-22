@@ -1,4 +1,4 @@
-"""Script to calculate and plot CORRECTED VLSM-statistics (using permuation-based cluster thresholds)
+"""Script to calculate and plot CORRECTED VLSM-statistics (using permutation-based cluster thresholds)
 -------------------------------------------------------------------------------------------------------
 This script performs and plots univariate voxel-wise lesion-symptom mapping corrected for multiple comparisons
 using permutation testing, based on NiiStat outcomes. (for 1 behavioral variable)
