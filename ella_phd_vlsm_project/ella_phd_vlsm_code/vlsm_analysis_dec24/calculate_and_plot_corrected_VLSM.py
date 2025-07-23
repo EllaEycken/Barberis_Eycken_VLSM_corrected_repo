@@ -85,17 +85,13 @@ from bisect import bisect_left
 
 ## Setting variables
 # TODO: Specify these variables YOURSELF at each run
-variable = 'Factor_1'
-    # = "ANTAT_speechrate": the behavioral variable you're interested in
-path_to_VLSM_folder = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA"
-    # = "C:/Users/u0146803/Documents/VLSM_masterthesis"
-uncorrected_VLSM_output_folder_name = "VLSM_factored_withMonthsPO_perm_5000_lesionregr_10Dec2024_094405"
-    # = "VLSM_ANTAT_perm_1000_lesionregr_23Dec2024_224000"
+variable = 'linguistic_variable_to_analyze'
+path_to_VLSM_folder = "path/to/your/VLSM/folder"
+uncorrected_VLSM_output_folder_name = "NiiStat_VLSM_zmaps_day_hour"
     # this is the output file of NiiStat (with no corrections for multiple comparisons)
-uncorrected_z_map = '_'.join(uncorrected_VLSM_output_folder_name.split("_")[:6]) # should be: VLSM_factored_withMonthsPO_perm_5000_lesionregr
-    # '_'.join(uncorrected_VLSM_output_folder_name.split("_")[:5]): should be VLSM_ANTAT_perm_1000_lesionregr
-corrected_VLSM_output_folder_name = "VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected"
-    # "VLSM_ANTAT_perm_1000_lesionregr_MCcorrected"
+uncorrected_z_map = '_'.join(uncorrected_VLSM_output_folder_name.split("_")[:6])
+    # this will be the name of the uncorrected_VLSM_output_folder, without the day and hour
+corrected_VLSM_output_folder_name = '_'.join([uncorrected_z_map, 'MCcorrected'])
     # this WILL be the output file of the Multiple Comparisons correction performed in this script
 uncorrected_pthreshold = 0.05
     # the uncorrected p-threshold (before correcting for multiple comparisons)
@@ -180,8 +176,6 @@ def take_closest(myList, myNumber):
 # TODO: edit PAD yourself (only if really necessary, normally this is done automatically according to the following pattern: /path VLSM + output/permTest + variable/
 variable_perm_path = os.path.join(path_to_VLSM_folder, 'output/permTest',f"{variable}/")
     # Load the path to the PERMUTATION TESTS for the variable of interest
-    # ("C:/Users/u0146803/Documents/VLSM_masterthesis/output/permTest/ANTAT_abbreviatedword/")
-    #"E:/vlsm_scratch/output/permTest/broad40_all/"
     # beware: after variable name also put ‘/’!
 
 allPerms = [f for f in os.listdir(variable_perm_path) if f.endswith('.nii')]  # create list of all permutation tests for the variable of interest
@@ -233,8 +227,6 @@ print("cluster threshold: N = {0}".format(cluster_threshold))
 # TODO: # TODO: edit PAD yourself (only if really necessary, normally this is done automatically according to the following pattern: /path VLSM + output/uncorrected_VLSM_output_folder + Zmap_variable/
 img = nib.load(os.path.join(path_to_VLSM_folder, 'output', uncorrected_VLSM_output_folder_name, f"Z{uncorrected_z_map}{variable}.nii"))
     # Load the path to the EFFECTIVE VLSM OUTPUT Z-MAP for the variable of interest
-    # "C:/Users/u0146803/Documents/VLSM_masterthesis/output/VLSM_ANTAT_perm_1000_lesionregr_23Dec2024_224000/ZVLSM_ANTAT_perm_1000_lesionregrANTAT_afgebrokenwoord.nii")
-    #'D:/PhD PDC/paper4_VLSM_aphasia/output/final___31Jan2024_103046/Zfinal__broad40_all.nii')
 img_data = img.get_fdata()
 
 """ i) Uncorrected part: you set all voxels = 0 where those voxels have a Z-value < the uncorrected z-value """
@@ -303,7 +295,7 @@ if len(surviving_clusters) == 0:
     # Save the plot
     # TODO: change the path (normally not necessary, see format) (specify file type (.svg) or (.png))
     figure.savefig(os.path.join(path_to_VLSM_folder, 'figures', f"{variable}_nonsign.png"))
-        # "C:/Users/u0146803/Documents/VLSM_masterthesis/figures/ANTAT_afgebrokenwoord_nonsign.png")
+
     plotting.show();
     print("Nothing survived threshold, nothing significant to plot, largest cluster (not significant) is shown")
 
@@ -318,7 +310,7 @@ else:
 
         # To plot, you need to convert negative z-values to positive (if necessary)
         if focus_on_positive_zvalues:
-            surviving_clusters_data = surviving_clusters_data * 1  # die 1 (positieve) of -1 (negatieve) hangt af of je geïnteresseerd bent in negatieve of positieve Z-waarden. Speel hiermee tot je zelf hebt wat je wil
+            surviving_clusters_data = surviving_clusters_data * 1
         else:
             surviving_clusters_data = surviving_clusters_data * -1
 
@@ -351,7 +343,7 @@ else:
     # Save the plot
     # TODO: change the path (normally not necessary, see format) (specify file type (.svg) or (.png))
     figure.savefig(os.path.join(path_to_VLSM_folder, 'figures', f"{variable}_sign.png"))
-    # figure.savefig('/media/PDC/7111-5376/vlsm_scratch/plots/cluster165_broad.svg')
+
     plotting.show();
 
 
@@ -366,12 +358,10 @@ if len(surviving_clusters) == 0:
     nib.save(largest_cluster_img,
              filename = os.path.join(path_to_VLSM_folder, 'output', corrected_VLSM_output_folder_name, f"Znonsign_cluster_{variable}.nii"))
 
-             #"C:/Users/u0146803/Documents/VLSM_masterthesis/output/VLSM_correctedMC/Znonsign_clusters_ANTAT_afgebrokenwoord.nii")
 else:
     # TODO: Customize PATH yourself (normally runs automatically)
     #  (choose appropriate name, specifying Path to output file “VLSM/Permutation_analysis_MCcorrected/Zsurviving_clusters_VARIABLE that you specified above.nii”)
     # Note: if VLSM analysis does not find any cluster, this line will give an error (because surviving_clusters_img is then not defined), ignore that Error (is not a big deal)
     nib.save(surviving_clusters_img,
              filename = os.path.join(path_to_VLSM_folder, 'output', corrected_VLSM_output_folder_name, f"Zsurviving_clusters_{variable}.nii"))
-             # "C:/Users/u0146803/Documents/VLSM_masterthesis/output/VLSM_correctedMC/Zsurviving_clusters_ANTAT_afgebrokenwoord.nii")
 
