@@ -41,7 +41,7 @@ def make_lesionOverlapMask(lesion_files_path,out_path
     """
     allFiles = [f for f in os.listdir(lesion_files_path) if f.endswith('.nii')]  # list with all files (= all subjects)
     i = 0 # will be the maximal lesion overlap (sf)
-    # Ex: in PDC, the highest sum = 7, so maximal lesion overlap = 7 persons (i = 7); in IANSA i = 49.
+    # Ex: in project A, the highest sum = 7, so maximal lesion overlap = 7 persons (i = 7); in project B i = 49.
 
     for subject in allFiles:
         path_subject = lesion_files_path + subject # concatenate the path
@@ -53,14 +53,14 @@ def make_lesionOverlapMask(lesion_files_path,out_path
         i += 1
         # Note: all individual data are binary files, 3D matrices. To make lesionOverlap, sum all binary files
 
-    print("Shape van individuele data: {0}".format(lesionOverlap.shape))
-    print("Unieke waarden: {0}".format(np.unique(lesionOverlap)))
+    print("Shape of individual data: {0}".format(lesionOverlap.shape))
+    print("Unique values: {0}".format(np.unique(lesionOverlap)))
     print("Max lesion overlap: {0}".format(np.max(lesionOverlap)))
 
     lesionOverlapMask = nib.Nifti1Image(lesionOverlap,
                                         img.affine)
     # affine argument needed by nilearn.
-    # that img was loaded in previous for-loop above (so is from 1 participant)but since all images
+    # that img was loaded in previous for-loop above (so is from 1 participant) but since all images
     # have the same dimensions, that affine is also the same for everyone.
     nib.save(lesionOverlapMask, out_path)
 
@@ -82,11 +82,11 @@ def threshold_lesionOverlapMask(overlap_mask_path, out_path, threshold):
     # Load images
     lesion_img = nib.load(thresh_lesionOverlapMask_path)  # your lesion overlap image
     atlas_img = nib.load(
-        "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/helper files/harvard_new.nii")
+        "path_to_your_VLSM_folder/helper files/harvard_new.nii")
 
     # Resample lesion image to atlas resolution and space
     lesion_resampled = ni.resample_to_img(lesion_img, atlas_img, interpolation='nearest')
-    resampled_thresh_lesionOverlapMask_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/resampled_thresh_lesionOverlap_Mask.nii"
+    resampled_thresh_lesionOverlapMask_path = "path_to_your_VLSM_folder/figures/resampled_thresh_lesionOverlap_Mask.nii"
     nib.save(lesion_resampled, resampled_thresh_lesionOverlapMask_path)
 
     """
@@ -159,7 +159,7 @@ def plot_lesionOverlap_surfMap(unthresholded_overlap_mask_path, threshold, out_p
     :param out_path: the output path for the lesion overlap PLOT
     :return: a lesion overlap plot, in the form of a Surface Map
 
-    Source: suggested by PDC, cannot be done (easily) in MRIcroGL
+    Preferred method, cannot be done (easily) in MRIcroGL
     """
     # Get the leion Overlap Mask (nifti)
     img = nib.load(unthresholded_overlap_mask_path)
@@ -193,21 +193,20 @@ if __name__ == "__main__":
     ### Preparations
     # ----------------
     # TODO: change paths
-    path_to_lesion_files = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/"
-    # "D:/PhD PDC/voorbeeldscripts_info/voorbeeldData_lesion_overlap_map/" # hierin staat lijstje van letsel-files (lesion extracted files per subject eg sub-060.nii)
+    path_to_lesion_files = "path_to_your_VLSM_folder/maps/"
     # Don't forget : / instead of \ ; and / in the end of the path name
-    allFiles = [f for f in os.listdir(path_to_lesion_files) if f.endswith('.nii')]  # lijst alle files (=alle proefpersonen)
-    out_path_unthresholded_lesionOverlapMask = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_Mask.nii"
-    out_path_lesionOverlapPlot_Z_thresh0 = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_noT.svg"
-    out_path_lesionOverlapPlot_Z_thresh2 = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_Tresh2.svg"
-    out_path_lesionOverlapPlot_Z_thresh5 = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_Tresh5.svg"
+    allFiles = [f for f in os.listdir(path_to_lesion_files) if f.endswith('.nii')]  # list of all files (all subjects)
+    out_path_unthresholded_lesionOverlapMask = "path_to_your_VLSM_folder/figures/lesionOverlap_Mask.nii"
+    out_path_lesionOverlapPlot_Z_thresh0 = "path_to_your_VLSM_folder/figures/lesionOverlap_noT.svg"
+    out_path_lesionOverlapPlot_Z_thresh2 = "path_to_your_VLSM_folder/figures/lesionOverlap_Tresh2.svg"
+    out_path_lesionOverlapPlot_Z_thresh5 = "path_to_your_VLSM_folder/figures/lesionOverlap_Tresh5.svg"
 
-    out_path_lesionOverlapPlot_surf_thresh0 = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_surf_noT.svg"
-    out_path_lesionOverlapPlot_surf_thresh2 = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_surf_Tresh2.svg"
-    out_path_lesionOverlapPlot_surf_thresh5 = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_surf_Tresh5.svg"
+    out_path_lesionOverlapPlot_surf_thresh0 = "path_to_your_VLSM_folder/figures/lesionOverlap_surf_noT.svg"
+    out_path_lesionOverlapPlot_surf_thresh2 = "path_to_your_VLSM_folder/figures/lesionOverlap_surf_Tresh2.svg"
+    out_path_lesionOverlapPlot_surf_thresh5 = "path_to_your_VLSM_folder/figures/lesionOverlap_surf_Tresh5.svg"
 
 
-    out_path_thresh_lesionOverlapMask = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/thresh_lesionOverlap_Mask.nii"
+    out_path_thresh_lesionOverlapMask = "path_to_your_VLSM_folder/figures/thresh_lesionOverlap_Mask.nii"
 
 
     ### Run the functions
@@ -215,7 +214,7 @@ if __name__ == "__main__":
     unthresh_lesion_overlap_mask_path = make_lesionOverlapMask(lesion_files_path = path_to_lesion_files,
                                                                out_path=out_path_unthresholded_lesionOverlapMask,
                                                                )
-    atlas_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/helper files/harvard_new.nii"
+    atlas_path = "path_to_your_VLSM_folder/helper files/harvard_new.nii"
     thresh_lesion_overlap_mask_path = threshold_lesionOverlapMask(unthresh_lesion_overlap_mask_path,
                                                                   out_path=out_path_thresh_lesionOverlapMask,
                                                                   threshold = 5, # TODO: change threshold
@@ -239,7 +238,7 @@ if __name__ == "__main__":
                               )
     # Plot threshold = 5
     # IANSA: VLSM analysis minimal_lesion_overlap = 10%
-    # => absolute amount = 5 (van n tot = 50): choose threshold = 5: from 5 persons overlap, this is shown in the plot
+    # => absolute amount = 5 ( n tot = 50): choose threshold = 5: from 5 persons overlap, this is shown in the plot
     plot_lesionOverlap_Zcoord(unthresh_lesion_overlap_mask_path,
                               threshold=5,
                               out_path=out_path_lesionOverlapPlot_Z_thresh5
