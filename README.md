@@ -8,8 +8,6 @@ The goal of this project was to explore the neural constructs of descriptive and
 in post-stroke aphasia, by performing univariate Voxel-wise Lesion Symptom Mapping (VLSM) - corrected
 for multiple comparisons - on four discourse constructs. 
 
-![alt text](images/Overview_Figure_Comparison_of_Features_v1.png)
-
 Overall, the pipeline consists of four steps:
 1.  Plotting the lesion overlap between subjects
 2.  Correcting univariate VLSM output for multiple comparisons (using permutation testing)
@@ -29,7 +27,7 @@ Stark, B. C., Basilakos, A., Hickok, G., Rorden, C., Bonilha, L., & Fridriksson,
 
 To install the latest code:
 ```
-pip install git+https://github.com/EllaEycken/Ella_PhD_VLSM_repo.git
+pip install git+https://github.com/EllaEycken/Barberis_Eycken_VLSM_corrected_repo.git
 ```
 Requirements can be installed from the requirements.txt file doing something like this:
 ```
