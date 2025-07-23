@@ -168,8 +168,6 @@ def plot_VLSM_cluster_surfMap(cluster_img_path, colour, variable, plot_type, zth
 
     # Optionally save the figure
     figure.savefig(os.path.join(save_plot_path, f"{variable}_{plot_type}_surf_threshview.png"))
-    # from plt.savefig(
-    #         os.path.join(output_dir, "figures", f"feature_importances_{label}_{interview_part}.png"), dpi = 300)
     plotting.show()
 
 
@@ -193,7 +191,7 @@ def plot_VLSM_cluster_axial(cluster_img_path, colour, variable, plot_type, zthre
     # switch datatype if necessary
     zmax = round(np.max(z_values))
 
-    ## Plot met tresholds
+    ## Plot with tresholds
     plotting.plot_roi(cluster_img, cut_coords=(-20, -4, 12, 20, 28, 36),
                       display_mode='z', colorbar=True, cmap= colour,threshold= zthreshold-0.001,vmax= zmax) # threshold=zthreshold)
 
@@ -202,74 +200,18 @@ def plot_VLSM_cluster_axial(cluster_img_path, colour, variable, plot_type, zthre
     plotting.show()
 
 
-def plot_VLSM_cluster_OLD(cluster_img_path,
-
-):
-    """ Plot the surviving/largest cluster from a univariate VLSM-analysis for a certain behavioural variable.
-    The plot will show the cluster (calculated based on the cluster threshold), and if correct is not None, it will
-    show the cluster for all z-values larger than the z threshold.
-    """
-    ## Initialiseer variabelen
-    img = nib.load(cluster_img_path)
-    cluster_data = img.get_fdata()  # negeer oranje stippellijn
-    plot_threshold = 0.001
-
-    # Make a copy of the data (if needed, for manipulating negative values)
-    cluster_data = cluster_data * 1  # -1 indien interesse in negatieve z-waarden
-    cluster_img = nib.Nifti1Image(cluster_data, img.affine)  # maak er opnieuw Nifti-image van
-
-    # Convert volume data to surface texture (Extract surface data from a Nifti image.)
-    texture = surface.vol_to_surf(
-        img = cluster_img,
-        surf_mesh = fsaverage.pial_left,
-        # file containing surface mesh geometry: fsaverage.pial_left = Gifti file, left hemisphere pial surface mesh
-    )
-
-    # Ensure that texture values below the zthreshold are also set to zero
-    # if correct is not None:
-        # texture[texture < zthreshold] = 0
-    # why: ChatGPT:
-    # It's also possible that the thresholding operation (cluster_data[cluster_data < zthreshold] = 0) works correctly in the volume data,
-    # but when mapping to the surface (texture = surface.vol_to_surf(cluster_img, fsaverage.pial_left)), some values are interpolated or rounded,
-    # and values slightly below the threshold might appear.
-    #
-    # Solution: Consider applying a threshold directly to the surface data (after it's been mapped), in case any residual values remain due to interpolation.
-
-    # Plot the surface map
-    figure = plotting.plot_surf_stat_map(surf_mesh = fsaverage.infl_left,
-                                         # =  refers to the left hemisphere of the brain's inflated surface mesh (a common anatomical reference surface in neuroimaging) from the fsaverage subject in FreeSurfer.
-                                         # likely contains the coordinates of the left hemisphere's inflated surface, which is used to plot the statistical map on the brain's cortical surface.
-                                         stat_map = texture,
-                                         # The texture here represents the statistical data (such as t-values, p-values, z-scores, or any other map) that is going to be visualized on the brain surface.
-                                         # This data is mapped to each vertex (point) of the surface, determining the "color" or intensity of the statistical map at each point on the brain's surface.
-                                         hemi='left',
-                                         title='Surface left hemisphere',
-                                         symmetric_cbar=False,
-                                         colorbar=True,
-                                         threshold=plot_threshold,
-                                         cmap='twilight_shifted',
-                                         bg_map=fsaverage.sulc_left,
-                                         )
-    figure.savefig(
-        f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_4_option2.svg")
-    # from plt.savefig(
-    #         os.path.join(output_dir, "figures", f"feature_importances_{label}_{interview_part}.png"), dpi = 300)
-    plotting.show()
-
-    return
 
 
 if __name__ == "__main__":
-    """ VLSM MASTERTHESIS PROJECT """
     ## Initialize some variables
     ## -------------------------
     # TODO: Change this yourself
-    variable = "ANTAT_TTR"
+    variable = "variable_of_interest"
     variable_type = "Lexical"  # choices: see below
     cluster_is_significant = True  # switch to false if not sign cluster
-    path_to_VLSM_folder = "C:/Users/u0146803/Documents/VLSM_masterthesis"
+    path_to_VLSM_folder = "path_to_your_VLSM_folder"
     tables_dir = os.path.join(path_to_VLSM_folder, 'tables')
-    corrected_VLSM_output_folder_name = "VLSM_ANTAT_perm_1000_lesionregr_MCcorrected"
+    corrected_VLSM_output_folder_name = "path_to_NiiStat_VLSM_output_+_MCcorrected"
     threshold_abs = 1.645
 
     # DO NOT CHANGE THIS
@@ -297,60 +239,16 @@ if __name__ == "__main__":
     # source: https://matplotlib.org/stable/users/explain/colors/colormaps.html
 
     cluster_img_path = os.path.join(path_to_VLSM_folder, 'output', corrected_VLSM_output_folder_name, f"Z{cluster_type}_{variable}.nii")
-        # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_4.nii"
-        # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/sub-01.nii"
     # Path to cluster img (nifti-file), make sure to use / instead of \; and add .nii extension
     save_plot_path = os.path.join(path_to_VLSM_folder, 'figures')
 
+    ## Functions
+    ## ---------
 
     # Get the voxel counts
     check_VLSM_output_by_threshold(cluster_img_path, tables_dir, variable, table_type, threshold_abs)
 
     # Plot the clusters
-    plot_VLSM_cluster_surfMap(cluster_img_path,colour, variable, plot_type, threshold_abs)
-    plot_VLSM_cluster_axial(cluster_img_path, colour, variable, plot_type, threshold_abs)
-    # plot_VLSM_cluster_OLD(cluster_img_path)
-
-
-
-    """ VLSM IANSA PROJECT """
-    ## Initialize some variables
-    ## __________________________
-    # TODO: Fill this in yourself
-    variable = "Factor_1"
-    variable_type = "Grammatical"  # choices: see below
-    calculate_distribution_of_VLSM_output = True  # swith to false if you want to see distribution of lesion overlap
-    cluster_is_significant = False  # switch to false if not sign cluster
-    path_to_VLSM_folder = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA"
-    corrected_VLSM_output_folder_name = "VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected"
-    tables_dir = os.path.join(path_to_VLSM_folder, 'tables')
-    threshold_abs = 1.645
-
-    # DO NOT CHANGE THIS
-    if variable == "Factor_1":
-        colour = 'Oranges'
-    elif variable == "Factor_2":
-        colour = 'Greens'
-    elif variable == "Factor_3":
-        colour = "Blue"
-    elif variable == "Factor_4":
-        colour = "Reds"
-    # source: https://matplotlib.org/stable/users/explain/colors/colormaps.html
-
-    cluster_img_path = os.path.join(path_to_VLSM_folder, 'output', corrected_VLSM_output_folder_name,
-                                    f"Z{cluster_type}_{variable}.nii")
-    # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_4.nii"
-    # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/sub-01.nii"
-    # Path to cluster img (nifti-file), make sure to use / instead of \; and add .nii extension
-    save_plot_path = os.path.join(path_to_VLSM_folder, 'figures')
-
-
-    ## Functions
-    ## ---------
-    # Get the voxel counts
-    check_VLSM_output_by_threshold(cluster_img_path, tables_dir, variable, table_type, threshold_abs)
-
-    # Plot the results
     plot_VLSM_cluster_surfMap(cluster_img_path, colour, variable, plot_type, threshold_abs)
     plot_VLSM_cluster_axial(cluster_img_path, colour, variable, plot_type, threshold_abs)
-    # plot_VLSM_cluster_OLD(cluster_img_path)
+
