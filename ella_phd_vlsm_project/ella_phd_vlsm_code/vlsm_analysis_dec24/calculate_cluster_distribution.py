@@ -34,7 +34,6 @@ from contextlib import redirect_stdout
 
 from matplotlib import pyplot as plt
 
-# from ella_phd_vlsm_project.ella_phd_vlsm_code.constants import harvard_brain_area_names
 
 
 ## VARIABLES
@@ -103,9 +102,8 @@ harvard_brain_area_names = [ # source: https://scalablebrainatlas.incf.org/servi
 ]
 
 
-### PDC PART: how much % of the cluster is in a specific brain region?
+### How much % of the cluster is in a specific brain region?
 # ------------------------------------------------------------------
-# Source: L-drive --> Brain and Language --> Datamanagement --> PhD PDC --> voorbeeldscripts_info --> VLSM --> Plotting-statistiek onderste lijnen
 
 def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path, tables_DIR, variable, table_type, analysis
 
@@ -128,7 +126,7 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
     """
     ## Initialiseer variabelen
     img = nib.load(lesion_img_path)
-    lesion_data = img.get_fdata()  # negeer oranje stippellijn
+    lesion_data = img.get_fdata()  # ignore orange
     atlas = nib.load(
         atlas_img_path).get_fdata()
 
@@ -198,7 +196,6 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
 
     # ---- STEP 3: save Dataframe as excel in table data directory
     file_name = os.path.join(tables_DIR, f"df_distrib_cluster_{analysis}_{variable}_{table_type}.xlsx")
-    # from: f"L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/VLSM_factored_permTest_5000_Factor_4_{name_add}_check.svg")
     df_distribution_cluster.to_excel(file_name, index=False)
         # https://www.geeksforgeeks.org/exporting-a-pandas-dataframe-to-an-excel-file/
 
@@ -206,7 +203,7 @@ def calculate_lesion_distribution_cluster_based(lesion_img_path, atlas_img_path,
 
 
 
-### NEW PART: how much % of that brain region (in the atlas) is occupied by the cluster?
+### How much % of that brain region (in the atlas) is occupied by the cluster?
 # -------------------------------------------------------------------------
 def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, tables_DIR, variable, table_type, analysis
                                               ):
@@ -251,7 +248,7 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
     # If z-value = 0, don't keep it (= let it be 0).
 
     ## Calculate percentages
-    # Get unique region labels from the atlas (Ella: not (excluding 0, which usually represents background))
+    # Get unique region labels from the atlas ( excluding 0, which usually represents background))
     list_brain_areas = np.unique(atlas_data)
 
     # Initialize a dictionary to store results
@@ -302,10 +299,7 @@ def calculate_lesion_distribution_atlas_based(lesion_img_path, atlas_img_path, t
         "Brain Area (parts) (Harvard) overlap with cluster")
     # discard those rows of df that have 0% overlap with the cluster
     df_distribution_atlas = df_distribution_atlas[df_distribution_atlas["% of regional overlap with cluster"] != 0.0]
-    # discard first row if that row is the background region:
-    # if df_distribution_atlas["Brain Region Number"][0] == 0: # number 0 in Harvard atlas = background region
-        # df_distribution_atlas = df_distribution_atlas.iloc[1:]
-        # df_distribution_atlas.reset_index(drop = True, inplace = True)
+    # discard first row if that row is the background region
 
     # ---- STEP 3: save Dataframe as excel in table data directory
     file_name = os.path.join(tables_DIR, f"df_distrib_atlas_{analysis}_{variable}_{table_type}.xlsx")
@@ -383,14 +377,12 @@ def make_histogram(distribution_excel,save_plot_path
 
     :param save_plot_path: where to save the final figure
     :return: the path where the plot is stored (save_plot_path)
-    TODO: change this function so that it automatically reads distribution_atlas_excel and distribution_cluster_excel
     """
     # Read in excel file
     data = pd.read_excel(distribution_excel)
 
     # Create a pandas DataFrame
     df = pd.DataFrame(data)
-    # df = df.drop(index=0).reset_index(drop=True)  # drop the first row
 
     # Set the lists of values, depending on the column values
     x_values = df.iloc[:, 2 ]
@@ -438,8 +430,6 @@ def make_histogram(distribution_excel,save_plot_path
     file_name = os.path.join(save_plot_path, f"VLSM_{variable}_{table_type}_distr_histogram.png")
     plt.savefig(
         file_name, dpi = 1200)
-    # from plt.savefig(
-    #         os.path.join(output_dir, "figures", f"feature_importances_{label}_{interview_part}.png"), dpi = 300)
     plt.show()
 
     return save_plot_path
@@ -453,12 +443,11 @@ if __name__ == "__main__":
     ## Initialize some variables
     ## --------------------------
     # TODO: Fill this out yourself
-    variable = "Factor_1"
+    variable = "linguistic_variable_of_interest"
     calculate_distribution_of_VLSM_output = True  # swith to false if you want to see distribution of lesion overlap
     cluster_is_significant = False  # switch to false if not sign cluster
-    path_to_VLSM_folder = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA"
-        # "C:/Users/u0146803/Documents/VLSM_regions"
-    corrected_VLSM_output_folder_name = "VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected"
+    path_to_VLSM_folder = "path/to/VLSM_folder/"
+    corrected_VLSM_output_folder_name = "NiiStat_VLSM_Output_Folder_name_MCcorrected"
     threshold_abs = 1.645 # corresponds to p <0.05
 
     # DO NOT CHANGE THIS
@@ -476,24 +465,21 @@ if __name__ == "__main__":
     # TODO: change this yourself
     lesion_img_path = os.path.join(path_to_VLSM_folder, 'output', corrected_VLSM_output_folder_name,
                                     f"Z{cluster_type}_{variable}.nii")
-    # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/output/VLSM_factored_withMonthsPO_perm_5000_lesionregr_MCcorrected/nonsign_largest_cluster_Factor_4.nii"
-    # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/maps/sub-01.nii"
     # Path to cluster img (nifti-file), make sure to use / instead of \; and add .nii extension
 
-    atlas_img_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/helper files/harvard_new.nii"
-        # 'D:/PhD PDC/paper4_VLSM_aphasia/harvard_new.nii'  # atlas can be found in paper4_VLSM_aphasia
+    atlas_img_path = "path_to_your_VLSM_folder/helper files/harvard_new.nii"
+    # Make sure you installed the harvard_new.nii in a helper files folder in your VLSM folder.
     # Note PDC: you may get errors later because your dimensions of the atlas do not match your dimensions of your lesion folder.
     # To solve this: open a lesion folder in MRIcroGL. Then Draw --> open VOI. Open as nii. Open that harvard_new.nii as on the L disk.
     # Right after: draw --> save VOI (save as nifti). overwrite harvard_new.nii. So you don't do anything, just open and close save again, but by opening on top of the injury folder,
     # you're working in the same dimensions. Then work with that new harvard_new.nii in this script. See also the manual of the VLSM on the L disk at point 6. Troubleshooting.
 
     tables_DIR = os.path.join(path_to_VLSM_folder, 'tables')
-        # "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/tables"
     # Path to tables
     figures_DIR = os.path.join(path_to_VLSM_folder, 'figures')
 
     # TODO: make df_distribution_variable yourself first
-    distribution_excel = os.path.join(path_to_VLSM_folder, 'df_distribution_short_Factor_3.xlsx')
+    distribution_excel = os.path.join(path_to_VLSM_folder, 'df_distribution_variable.xlsx')
 
 
     ## Run the functions (don't change, only comment out if you don't want to run the function)
@@ -533,20 +519,19 @@ if __name__ == "__main__":
 
     """FOR LESION OVERLAP CLUSTER """
     """---------------------------"""
-    # unthresh_lesionOverlapMask_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/lesionOverlap_Mask.nii"
-    thresh_lesionOverlapMask_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/thresh_lesionOverlap_Mask.nii"
+    thresh_lesionOverlapMask_path = "path_to_your_VLSM_folder/figures/thresh_lesionOverlap_Mask.nii"
 
     # Load images
     lesion_img = nib.load(thresh_lesionOverlapMask_path)  # your lesion overlap image
     atlas_img = nib.load(
-        "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/helper files/harvard_new.nii")
+        "path_to_your_VLSM_folder//helper files/harvard_new.nii")
 
     # Resample lesion image to atlas resolution and space
     lesion_resampled = ni.resample_to_img(lesion_img, atlas_img, interpolation='nearest')
-    resampled_thresh_lesionOverlapMask_path = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/figures/resampled_thresh_lesionOverlap_Mask.nii"
+    resampled_thresh_lesionOverlapMask_path = "path_to_your_VLSM_folder/figures/resampled_thresh_lesionOverlap_Mask.nii"
     nib.save(lesion_resampled, resampled_thresh_lesionOverlapMask_path)
 
-    tables_IANSA_DIR = "L:/GBW-0128_Brain_and_Language/Aphasia/IANSA_study/VLSM/VLSM_IANSA/tables"
+    tables_IANSA_DIR = "path_to_your_VLSM_folder/tables"
     variable_lesionOverlap = "lesion_overlap"  # name of the variable in the table
     table_type_lesionOverlap = 'threshold_5'
 
